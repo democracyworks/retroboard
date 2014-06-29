@@ -16,15 +16,16 @@
   :uberjar-name "retroboard-standalone.jar"
   :min-lein-version "2.0.0"
   :main retroboard.server
+  :aliases {"uberjar" ["do" "cljsbuild" "once," "uberjar"]}
   :cljsbuild {
               :builds {:dev
-                       {:source-paths ["src"]
+                       {:source-paths ["src" "environments/dev"]
                         :compiler {:output-to "dev-resources/public/js/main.js"
                                    :output-dir "dev-resources/public/js/out"
                                    :optimizations :none
                                    :source-map true}}
                        :production
-                       {:source-paths ["src"]
+                       {:source-paths ["src" "environments/production"]
                         :compiler {:output-to "resources/public/js/prod.js"
                                    :optimizations :advanced
                                    :pretty-print false

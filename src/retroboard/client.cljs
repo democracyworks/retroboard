@@ -1,6 +1,7 @@
 (ns retroboard.client
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [retroboard.config :as config]
             [cljs.core.async :refer [chan <! put! pub sub unsub]]
             [goog.events :as events]
             [cljs.reader :as reader]
@@ -26,7 +27,7 @@
                    (fn [e]
                      (let [msg (reader/read-string (.-message e))]
                        (put! incoming msg))))
-    (.open ws "ws://localhost:8080/ws")
+    (.open ws config/ws-url)
     {:to-send to-send :incoming (pub incoming :cmd) :websocket ws}))
 
 (defn new-resource [{:keys [to-send incoming]}]

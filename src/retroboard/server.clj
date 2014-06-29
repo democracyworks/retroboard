@@ -62,9 +62,8 @@
                           (cmd-handler (edn/read-string data) channel)))))
 
 (defroutes app
-  (GET "/e" [] (resource-response "public/html/index.html"))
+  (GET "/" [] (resource-response "public/html/index.html"))
   (GET "/e/:env" [] (resource-response "public/html/index.html"))
-  (GET "/ping" [] "pong!")
   (GET "/ws" [] handler))
 
 (def web-handler
