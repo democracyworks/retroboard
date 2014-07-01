@@ -58,6 +58,9 @@
      (let [rid (<! resource-chan)]
        (>! (:to-send connection) {:cmd :action :action [:new-column {:id rid :header header}]})))))
 
+(defn delete-column [connection column]
+  (go (>! (:to-send connection) {:cmd :action :action [:delete-column {:id column}]})))
+
 (defn new-note [connection column text]
   (let [resource-chan (new-resource connection)]
     (go
@@ -80,6 +83,10 @@
 (defmethod apply-action :new-column [initial-state [_ action]]
   (let [{:keys [id header]} action]
     (assoc initial-state id {:header header :notes {}})))
+
+(defmethod apply-action :delete-column [initial-state [_ action]]
+  (let [{:keys [id]} action]
+    (dissoc initial-state id)))
 
 (defmethod apply-action :new-note [initial-state [_ action]]
   (let [{:keys [id column text]} action]
@@ -122,6 +129,16 @@
                                                             (.. e -target -value)))})
                  (dom/button #js {:onClick create-column}
                              "Add column"))))))
+
+(defn delete-column-button [app owner]
+  (reify
+    om/IRender
+    (render [_]
+      (let [{:keys [connection column-id]} app
+            delete-column (fn []
+                            (delete-column (om/value connection) column-id))]
+        (dom/button #js {:onClick delete-column}
+                    "Delete!")))))
 
 (defn create-note-button [app owner]
   (reify
@@ -207,6 +224,8 @@
             [id column] column]
         (dom/div #js {:className "column"}
                  (dom/h1 nil (:header column))
+                 (om/build delete-column-button {:connection connection
+                                                 :column-id id})
                  (apply dom/div nil
                         (map (fn [note] (om/build note-view {:connection connection
                                                             :column-id id
