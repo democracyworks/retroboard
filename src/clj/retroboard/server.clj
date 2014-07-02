@@ -1,5 +1,6 @@
 (ns retroboard.server
-  (:require [clojure.edn :as edn]
+  (:require [retroboard.resource :as resource]
+            [clojure.edn :as edn]
             [org.httpkit.server :refer :all]
             [ring.util.response :refer [resource-response]]
             [ring.middleware.resource :refer [wrap-resource]]
@@ -32,9 +33,10 @@
 (defmethod cmd-handler :action [data channel]
   (println "Received " data)
   (when-let [env (get-env channel)]
-    (swap! (:history env) conj (:action data))
-    (dorun (map #(send! % (pr-str {:cmd :cmds :commands [(:action data)]}))
-                (-> env :clients deref)))))
+    (let [action (resource/replace-ids (:resource-factory env) (:action data))]
+      (swap! (:history env) conj action)
+      (dorun (map #(send! % (pr-str {:cmd :cmds :commands [action]}))
+                  (-> env :clients deref))))))
 
 (defmethod cmd-handler :new-resource [data channel]
   (println "New resource")
@@ -59,7 +61,7 @@
   (with-channel request channel
     (on-close channel (fn [status] (cmd-handler {:cmd :unregister} channel)))
     (on-receive channel (fn [data]
-                          (cmd-handler (edn/read-string data) channel)))))
+                          (cmd-handler (edn/read-string {:readers *data-readers*} data) channel)))))
 
 (defroutes app
   (GET "/" [] (resource-response "public/html/index.html"))

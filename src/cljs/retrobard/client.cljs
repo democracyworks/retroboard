@@ -2,16 +2,17 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [retroboard.config :as config]
+            [retroboard.resource :refer [temprid]]
             [cljs.core.async :refer [chan <! put! pub sub unsub]]
             [goog.events :as events]
             [cljs.reader :as reader]
             [clojure.string :refer [split]])
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]]
+                   retroboard.tags)
   (:import goog.net.WebSocket
            goog.net.WebSocket.EventType))
 
 (enable-console-print!)
-
 
 (defn web-socket []
   (let [ws (WebSocket.)
@@ -30,17 +31,6 @@
     (.open ws config/ws-url)
     {:to-send to-send :incoming (pub incoming :cmd) :websocket ws}))
 
-(defn new-resource [{:keys [to-send incoming]}]
-  (let [resource-chan (chan)
-        return-chan (chan)]
-    (sub incoming :resource-id resource-chan)
-    (go
-     (let [resource-id (:resource-id (<! resource-chan))]
-       (unsub incoming :resource-id resource-chan)
-       (>! return-chan resource-id)))
-    (put! to-send {:cmd :new-resource})
-    return-chan))
-
 (defn new-environment [{:keys [to-send incoming]}]
   (let [env-chan (chan)
         return-chan (chan)]
@@ -53,30 +43,27 @@
     return-chan))
 
 (defn new-column [connection header]
-  (let [resource-chan (new-resource connection)]
-    (go
-     (let [rid (<! resource-chan)]
-       (>! (:to-send connection) {:cmd :action :action [:new-column {:id rid :header header}]})))))
+  (go
+   (>! (:to-send connection) {:cmd :action
+                              :action [:new-column {:id (temprid) :header header}]})))
 
 (defn delete-column [connection column]
   (go (>! (:to-send connection) {:cmd :action :action [:delete-column {:id column}]})))
 
 (defn new-note [connection column text]
-  (let [resource-chan (new-resource connection)]
-    (go
-     (let [rid (<! resource-chan)]
-       (>! (:to-send connection) {:cmd :action :action [:new-note {:id rid :column column :text text}]})))))
+  (go
+   (>! (:to-send connection) {:cmd :action
+                              :action [:new-note {:id (temprid) :column column :text text}]})))
 
 (defn delete-note [connection column note]
   (go (>! (:to-send connection) {:cmd :action :action [:delete-note {:column column :id note}]})))
 
 (defn new-vote [connection column note]
-  (let [resource-chan (new-resource connection)]
-    (go
-     (let [rid (<! resource-chan)]
-       (>! (:to-send connection) {:cmd :action :action [:new-vote {:id rid
-                                                                   :column column
-                                                                   :note note}]})))))
+  (go
+   (>! (:to-send connection) {:cmd :action
+                              :action [:new-vote {:id (temprid)
+                                                  :column column
+                                                  :note note}]})))
 
 (defmulti apply-action (fn [_ action] (first action)))
 
