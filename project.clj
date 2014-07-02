@@ -32,7 +32,9 @@
   :uberjar-name "retroboard-standalone.jar"
   :min-lein-version "2.0.0"
   :main retroboard.server
-  :aliases {"uberjar" ["do" "cljsbuild" "once," "uberjar"]}
+  :aliases {"uberjar" ["do" "cljx" "once,"
+                       "cljsbuild" "once" "production,"
+                       "uberjar"]}
   :cljsbuild {
               :builds {:dev
                        {:source-paths ["src/cljs" "target/classes" "environments/dev"]
