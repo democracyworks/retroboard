@@ -7,8 +7,7 @@
             [goog.events :as events]
             [cljs.reader :as reader]
             [clojure.string :refer [split]])
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]]
-                   retroboard.tags)
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:import goog.net.WebSocket
            goog.net.WebSocket.EventType))
 
