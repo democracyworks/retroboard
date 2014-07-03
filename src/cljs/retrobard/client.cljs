@@ -7,7 +7,8 @@
             [goog.events :as events]
             [cljs.reader :as reader]
             [clojure.string :refer [split]])
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
+  (:require-macros [retroboard.macros :refer [defaction]]
+                   [cljs.core.async.macros :refer [go go-loop]])
   (:import goog.net.WebSocket
            goog.net.WebSocket.EventType))
 
@@ -41,55 +42,26 @@
     (put! to-send {:cmd :new-environment})
     return-chan))
 
-(defn new-column [connection header]
-  (go
-   (>! (:to-send connection) {:cmd :action
-                              :action [:new-column {:id (temprid) :header header}]})))
 
-(defn delete-column [connection column]
-  (go (>! (:to-send connection) {:cmd :action :action [:delete-column {:id column}]})))
+(defaction new-column [id header]
+  state (assoc state id {:header header :notes {}}))
 
-(defn new-note [connection column text]
-  (go
-   (>! (:to-send connection) {:cmd :action
-                              :action [:new-note {:id (temprid) :column column :text text}]})))
+(defaction delete-column [id]
+  state (dissoc state id))
 
-(defn delete-note [connection column note]
-  (go (>! (:to-send connection) {:cmd :action :action [:delete-note {:column column :id note}]})))
+(defaction new-note [id column-id text]
+  state (assoc-in state [column-id :notes id] {:text text :votes #{}}) )
 
-(defn new-vote [connection column note]
-  (go
-   (>! (:to-send connection) {:cmd :action
-                              :action [:new-vote {:id (temprid)
-                                                  :column column
-                                                  :note note}]})))
+(defaction delete-note [column-id id]
+  state (update-in state [column-id :notes] dissoc id))
 
-(defmulti apply-action (fn [_ action] (first action)))
-
-(defmethod apply-action :new-column [initial-state [_ action]]
-  (let [{:keys [id header]} action]
-    (assoc initial-state id {:header header :notes {}})))
-
-(defmethod apply-action :delete-column [initial-state [_ action]]
-  (let [{:keys [id]} action]
-    (dissoc initial-state id)))
-
-(defmethod apply-action :new-note [initial-state [_ action]]
-  (let [{:keys [id column text]} action]
-    (assoc-in initial-state [column :notes id] {:text text :votes #{}})))
-
-(defmethod apply-action :delete-note [initial-state [_ action]]
-  (let [{:keys [column id]} action]
-    (update-in initial-state [column :notes] dissoc id)))
-
-(defmethod apply-action :new-vote [initial-state [_ action]]
-  (let [{:keys [id column note]} action]
-    (update-in initial-state [column :notes note :votes] conj id)))
+(defaction new-vote [id column-id note-id]
+  state (update-in state [column-id :notes note-id :votes] conj id))
 
 (defn apply-actions [actions initial-state]
-  (reduce apply-action initial-state actions))
-
-
+  (reduce (fn [state action]
+            ((apply-action action) state))
+          initial-state actions))
 
 
 (defn create-column-button [connection owner]
@@ -100,7 +72,7 @@
     (render-state [this {:keys [header]}]
       (letfn [(create-column []
                 (when (seq header)
-                  (new-column (om/value connection) header)
+                  (new-column (om/value connection) (temprid) header)
                   (om/set-state! owner :header "")))]
         (dom/div nil
                  (dom/label #js {:htmlFor "new-column"} "New Column")
@@ -135,7 +107,7 @@
       (let [{:keys [connection column-id]} app
             create-note (fn []
                           (when (seq text)
-                            (new-note (om/value connection) column-id text)
+                            (new-note (om/value connection) (temprid) column-id text)
                             (om/set-state! owner :text "")))]
         (dom/div nil
                  (dom/label #js {:htmlFor "new-note"} "New Note")
@@ -167,7 +139,7 @@
     (render [_]
       (let [{:keys [connection column-id note-id]} app
             create-vote (fn []
-                          (new-vote (om/value connection) column-id note-id))]
+                          (new-vote (om/value connection) (temprid) column-id note-id))]
         (dom/button #js {:onClick create-vote}
                     "Upvote!")))))
 
