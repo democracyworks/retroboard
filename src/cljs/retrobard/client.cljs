@@ -7,7 +7,7 @@
             [goog.events :as events]
             [cljs.reader :as reader]
             [clojure.string :refer [split]])
-  (:require-macros [retroboard.macros :refer [defaction]]
+  (:require-macros [retroboard.macros :refer [defactions]]
                    [cljs.core.async.macros :refer [go go-loop]])
   (:import goog.net.WebSocket
            goog.net.WebSocket.EventType))
@@ -43,26 +43,23 @@
     return-chan))
 
 
-(defaction new-column [id header]
-  state (assoc state id {:header header :notes {}}))
 
-(defaction delete-column [id]
-  state (dissoc state id))
-
-(defaction new-note [id column-id text]
-  state (assoc-in state [column-id :notes id] {:text text :votes #{}}) )
-
-(defaction delete-note [column-id id]
-  state (update-in state [column-id :notes] dissoc id))
-
-(defaction new-vote [id column-id note-id]
-  state (update-in state [column-id :notes note-id :votes] conj id))
+(defactions apply-action
+  (new-column [id header state]
+              (assoc state id {:header header :notes {}}))
+  (delete-column [id state]
+                 state (dissoc state id))
+  (new-note [id column-id text state]
+            (assoc-in state [column-id :notes id] {:text text :votes #{}}))
+  (delete-note [column-id id state]
+               (update-in state [column-id :notes] dissoc id))
+  (new-vote [id column-id note-id state]
+            (update-in state [column-id :notes note-id :votes] conj id)))
 
 (defn apply-actions [actions initial-state]
   (reduce (fn [state action]
             ((apply-action action) state))
           initial-state actions))
-
 
 (defn create-column-button [connection owner]
   (reify
