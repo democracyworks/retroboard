@@ -38,16 +38,25 @@
     }
 }
 
-$green: rgb(0, 120, 231);
+$blue: rgb(0, 120, 231);
+$red: rgb(202, 60, 60);
 
 .new-environment {
-  @include button($green);
+  @include button($blue);
 }
 
 .add-note, .add-column {
-  @include button($green, 45%);
+  @include button($blue, 45%);
 }
 
 .delete-column {
-  @include button(rgb(202, 60, 60), 50%);
+  @include button($red, 45%);
+}
+
+.vote {
+  @include button($blue, 25%);
+}
+
+.delete-note {
+  @include button($red, 25%);
 }

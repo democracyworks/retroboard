@@ -132,7 +132,8 @@
       (let [{:keys [connection column-id note-id]} app
             delete-note (fn []
                           (delete-note (om/value connection) column-id note-id))]
-        (dom/button #js {:onClick delete-note}
+        (dom/button #js {:onClick delete-note
+                         :className "delete-note"}
                     "Delete!")))))
 
 (defn create-vote-button [app owner]
@@ -142,8 +143,9 @@
       (let [{:keys [connection column-id note-id]} app
             create-vote (fn []
                           (new-vote (om/value connection) (temprid) column-id note-id))]
-        (dom/button #js {:onClick create-vote}
-                    "Upvote!")))))
+        (dom/button #js {:onClick create-vote
+                         :className "vote"}
+                    "Vote")))))
 
 (defn change-env [app env-id]
   (set! (.-pathname js/location) (str "e/" env-id)))
