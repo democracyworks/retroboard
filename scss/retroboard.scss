@@ -1,1 +1,53 @@
+@mixin button($bg_color, $font_size:100%) {
+    display: inline-block;
+    vertical-align: baseline;
+    text-align: center;
+    padding: 0.5em 1em;
+    border: none rgba(0, 0, 0, 0);
+    background-color: $bg_color;
+    text-decoration: none;
+    border-radius: 2px;
+    font-size: $font_size;
+    color: white;
+    border-radius: 4px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 
+    &:hover, &:focus {
+      background-image: -webkit-gradient(linear, 0 0, 0 100%, from(transparent), color-stop(40%, rgba(0,0,0, 0.05)), to(rgba(0,0,0, 0.10)));
+      background-image: -webkit-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+      background-image: -moz-linear-gradient(top, rgba(0,0,0, 0.05) 0%, rgba(0,0,0, 0.10));
+      background-image: -o-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+      background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+    }
+    &:focus {
+      outline: 0;
+    }
+    &:active {
+      box-shadow: 0 0 0 1px rgba(0,0,0, 0.15) inset, 0 0 6px rgba(0,0,0, 0.20) inset;
+    }
+    &[disabled] {
+      border: none;
+      background-image: none;
+      filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+      filter: alpha(opacity=40);
+      -khtml-opacity: 0.40;
+      -moz-opacity: 0.40;
+      opacity: 0.40;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+}
+
+$green: rgb(0, 120, 231);
+
+.new-environment {
+  @include button($green);
+}
+
+.add-note, .add-column {
+  @include button($green, 45%);
+}
+
+.delete-column {
+  @include button(rgb(202, 60, 60), 50%);
+}

@@ -82,7 +82,9 @@
                                  :onChange (fn [e]
                                              (om/set-state! owner :header
                                                             (.. e -target -value)))})
-                 (dom/button #js {:onClick create-column}
+                 (dom/button #js {:onClick create-column
+                                  :className "add-column"
+                                  :disabled (empty? header)}
                              "Add column"))))))
 
 (defn delete-column-button [app owner]
@@ -92,8 +94,9 @@
       (let [{:keys [connection column-id]} app
             delete-column (fn []
                             (delete-column (om/value connection) column-id))]
-        (dom/button #js {:onClick delete-column}
-                    "Delete!")))))
+        (dom/button #js {:onClick delete-column
+                         :className "delete-column"}
+                    "Delete Column")))))
 
 (defn create-note-button [app owner]
   (reify
@@ -117,7 +120,9 @@
                                  :onChange (fn [e]
                                              (om/set-state! owner :text
                                                             (.. e -target -value)))})
-                 (dom/button #js {:onClick create-note}
+                 (dom/button #js {:onClick create-note
+                                  :className "add-note"
+                                  :disabled (empty? text)}
                              "Add note"))))))
 
 (defn delete-note-button [app owner]
@@ -152,8 +157,9 @@
                          (go
                           (let [env-id (<! (new-environment @connection))]
                             (change-env app env-id))))]
-        (dom/button #js {:onClick create-env}
-                    "New environment!")))))
+        (dom/button #js {:onClick create-env
+                         :className "new-environment"}
+                    "New Environment")))))
 
 (defn note-view [app owner]
   (reify
