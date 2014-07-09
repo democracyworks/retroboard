@@ -9,4 +9,6 @@ pom.xml.asc
 /.nrepl-port
 /dev-resources/public/js/*
 /resources/public/js/*
+/dev-resources/public/stylesheets
+/resources/public/stylesheets/*
 main.js

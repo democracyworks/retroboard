@@ -5,7 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[lein-cljsbuild "1.0.3"]
             [com.cemerick/clojurescript.test "0.3.0"]
-            [com.keminglabs/cljx "0.4.0"]]
+            [com.keminglabs/cljx "0.4.0"]
+            [lein-haml-sass "0.2.7-SNAPSHOT"]]
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2234"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
@@ -33,8 +34,12 @@
   :min-lein-version "2.0.0"
   :main retroboard.server
   :aliases {"uberjar" ["do" "cljx" "once,"
+                       "scss" "once,"
                        "cljsbuild" "once" "production,"
                        "uberjar"]}
+  :scss {:src "scss"
+         :output-directory "resources/public/stylesheets"
+         :output-extension "css"}
   :cljsbuild {
               :builds {:dev
                        {:source-paths ["src/cljs" "target/classes" "environments/dev"]
