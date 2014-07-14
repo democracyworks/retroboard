@@ -1,9 +1,9 @@
 (ns retroboard.macros)
 
-(defmacro defaction [mult-name [name action-args & body]]
+(defn defaction [mult-name [name action-args & body]]
   (let [args (drop-last action-args)
         state (last action-args)]
-    `(do (defn ~name [connection# ~@args]
+    `((defn ~name [connection# ~@args]
            (cljs.core.async/put!
             (:to-send connection#)
             {:cmd :action
@@ -17,4 +17,4 @@
 
 (defmacro defactions [name & actions]
   `(do (defmulti ~name first)
-       ~@(map (fn [action#] `(defaction ~name ~action#)) actions)))
+       ~@(apply concat (map (fn [action#] (defaction name action#)) actions))))
