@@ -237,7 +237,7 @@
                         (map (fn [note] (om/build note-view {:connection connection
                                                             :column-id id
                                                             :note note}))
-                             (:notes column)))
+                             (sort-by first (:notes column))))
                  (om/build create-note-button {:connection connection
                                                :column-id id}))))))
 
@@ -270,7 +270,7 @@
                                    (map (fn [col]
                                           (om/build column-view {:connection connection
                                                                  :column col}))
-                                        columns)))))))))
+                                        (sort-by first columns))))))))))
 
 (def app-state (atom {:state {} :connection (web-socket)}))
 
