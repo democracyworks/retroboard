@@ -49,6 +49,18 @@
    :history (atom [])
    :resource-factory (new-resource-factory)})
 
+(defn all-clients []
+  (mapcat (fn [env] @(:clients env)) (vals @environments)))
+
+(defn ping [channel]
+  (send! channel (pr-str {:ping :pong})))
+
+(defn ping-clients []
+  (future (loop []
+            (Thread/sleep 1000)
+            (dorun (map ping (all-clients)))
+            (recur))))
+
 (def env-resource-factory (new-resource-factory))
 
 (defmethod cmd-handler :new-environment [data channel]
@@ -76,4 +88,5 @@
 
 (defn -main [& port]
   (let [port (Integer. (or (first port) "8080"))]
-    (run-server web-handler {:port port})))
+    (run-server web-handler {:port port})
+    (ping-clients)))
