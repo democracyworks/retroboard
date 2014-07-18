@@ -54,7 +54,9 @@
   (delete-note [column-id id state]
                (update-in state [column-id :notes] dissoc id))
   (new-vote [id column-id note-id state]
-            (update-in state [column-id :notes note-id :votes] conj id)))
+            (update-in state [column-id :notes note-id :votes] conj id))
+  (edit-note [id column-id new-text state]
+             (assoc-in state [column-id :notes id :text] new-text)))
 
 (defn apply-actions [actions initial-state]
   (reduce (fn [state action]
@@ -163,6 +165,46 @@
                          :className "new-environment"}
                     "New Environment")))))
 
+
+(defn display [show]
+  (if show
+    #js {}
+    #js {:display "none"}))
+
+(defn handle-change [e data edit-key owner]
+  (om/transact! data edit-key (fn [_] (.. e -target -value))))
+
+(defn end-edit [text owner cb]
+  (om/set-state! owner :editing false)
+  (cb text))
+
+
+(defn editable [data owner {:keys [edit-key on-edit] :as opts}]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:editing false})
+    om/IRenderState
+    (render-state [_ {:keys [editing]}]
+      (let [text (get data edit-key)]
+        (dom/span nil
+                (dom/span #js {:style (display (not editing))
+                               :onClick (fn [el] (om/set-state! owner :editing true))}
+                          text)
+                (dom/input
+                 #js {:style (display editing)
+                      :value text
+                      :onChange #(handle-change % data edit-key owner)
+                      :onKeyPress #(when (== (.-keyCode %) 13)
+                                     (end-edit text owner on-edit))
+                      :onBlur (fn [e]
+                                (when (om/get-state owner :editing)
+                                  (end-edit text owner on-edit)))})
+                (dom/button
+                 #js {:style (display (not editing))
+                      :onClick #(om/set-state! owner :editing true)}
+                 "Edit"))))))
+
 (defn note-view [app owner]
   (reify
     om/IRender
@@ -170,7 +212,9 @@
       (let [{:keys [connection column-id note]} app
             [id note] note]
         (dom/div #js {:className "note"}
-                 (:text note) " "
+                 (om/build editable note
+                           {:opts {:edit-key :text
+                                   :on-edit (partial edit-note connection id column-id)}})
                  (count (:votes note)) " votes!"
                  (om/build create-vote-button {:connection connection
                                                :column-id column-id
