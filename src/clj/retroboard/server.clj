@@ -21,9 +21,11 @@
 (defmulti cmd-handler (fn [data _] (:cmd data)))
 (defmethod cmd-handler :register [data channel]
   (println "Registering " channel " to env " (:action data))
-  (when-let [env (@environments (:action data))]
-    (swap! (env :clients) conj channel)
-    (send! channel (pr-str {:cmd :cmds :commands (-> env :history deref)}))))
+  (if-let [env (@environments (:action data))]
+    (do
+      (swap! (env :clients) conj channel)
+      (send! channel (pr-str {:cmd :cmds :commands (-> env :history deref)})))
+    (send! channel (pr-str {:cmd :error :error :no-such-environment}))))
 
 (defmethod cmd-handler :unregister [data channel]
   (println "Unregistering " channel)

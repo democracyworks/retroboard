@@ -149,7 +149,7 @@
                          :className "vote"}
                     "Vote")))))
 
-(defn change-env [app env-id]
+(defn change-env [env-id]
   (set! (.-pathname js/location) (str "e/" env-id)))
 
 (defn create-environment-button [app owner]
@@ -160,7 +160,7 @@
             create-env (fn []
                          (go
                           (let [env-id (<! (new-environment @connection))]
-                            (change-env app env-id))))]
+                            (change-env env-id))))]
         (dom/button #js {:onClick create-env
                          :className "new-environment"}
                     "New Environment")))))
@@ -241,6 +241,15 @@
                  (om/build create-note-button {:connection connection
                                                :column-id id}))))))
 
+
+(defn error-handler [app]
+  (let [error-chan (chan)]
+    (sub (get-in app [:connection :incoming]) :error error-chan)
+    (go-loop []
+             (let [error (:error (<! error-chan))]
+               (case error
+                 :no-such-environment (om/update! app :connected :no-such-environment))))))
+
 (defn view [app owner]
   (reify
     om/IInitState
@@ -248,12 +257,14 @@
     om/IWillMount
     (will-mount [_]
       (let [action-chan (chan)]
+        (error-handler app)
         (if (:id app)
           (put! (get-in (if (om/rendering?) app @app) [:connection :to-send])
                 {:cmd :register :action (:id app)}))
         (sub (get-in app [:connection :incoming]) :cmds action-chan)
         (go-loop []
                  (let [actions (:commands (<! action-chan))]
+                   (om/update! app :connected :connected)
                    (om/transact! app :state (partial apply-actions actions))
                    (recur)))))
     om/IRenderState
@@ -263,7 +274,12 @@
         (dom/div nil
                  (dom/div nil
                           (om/build create-environment-button app))
-                 (if (:id app)
+                 (case (:connected app)
+                   nil
+                   (dom/h3 nil "Connecting...")
+                   :no-such-environment
+                   (dom/h3 nil "Sorry. That environment doesn't exist. Why not make a new one?")
+                   :connected
                    (dom/div nil
                             (om/build create-column-button (:connection app))
                             (apply dom/div nil
