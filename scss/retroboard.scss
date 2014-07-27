@@ -1,62 +1,164 @@
-@mixin button($bg_color, $font_size:100%) {
-    display: inline-block;
-    vertical-align: baseline;
-    text-align: center;
-    padding: 0.5em 1em;
-    border: none rgba(0, 0, 0, 0);
-    background-color: $bg_color;
-    text-decoration: none;
-    border-radius: 2px;
-    font-size: $font_size;
-    color: white;
-    border-radius: 4px;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 
-    &:hover, &:focus {
-      background-image: -webkit-gradient(linear, 0 0, 0 100%, from(transparent), color-stop(40%, rgba(0,0,0, 0.05)), to(rgba(0,0,0, 0.10)));
-      background-image: -webkit-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
-      background-image: -moz-linear-gradient(top, rgba(0,0,0, 0.05) 0%, rgba(0,0,0, 0.10));
-      background-image: -o-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
-      background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+$blue: #3EC3D5;
+$red: #E9405A;
+$dark: #313540;
+$transparent: rgba(0,0,0,0);
+
+$fa-var-times: "\f00d";
+$fa-var-thumbs-o-up: "\f087";
+$fa-var-thumbs-up: "\f164";
+$fa-var-plus: "\f067";
+$fa-var-pencil: "\f040";
+
+
+
+
+@mixin button($icon, $color, $font-size: 24px, $active-icon:1) {
+  &:before {
+    font-size: $font-size;
+    color: $color;
+    font-family: FontAwesome;
+    content: $icon;
+  }
+  display:inline-block;
+  vertical-align: baseline;
+  text-align: center;
+  padding: 0.5em 1em;
+  border: none rgba(0, 0, 0, 0);
+  background-color: $transparent;
+  text-decoration: none;
+  border-radius: 2px;
+  color: $dark;
+  border-radius: 4px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;
+
+  &:hover {
+    &:before {
+      color: darken($color, 20%);
     }
-    &:focus {
-      outline: 0;
-    }
-    &:active {
-      box-shadow: 0 0 0 1px rgba(0,0,0, 0.15) inset, 0 0 6px rgba(0,0,0, 0.20) inset;
-    }
-    &[disabled] {
-      border: none;
-      background-image: none;
-      filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
-      filter: alpha(opacity=40);
-      -khtml-opacity: 0.40;
-      -moz-opacity: 0.40;
-      opacity: 0.40;
-      cursor: not-allowed;
-      box-shadow: none;
+  }
+  &:active {
+    &:before {
+      font-size: $font-size;
+      color: darken($color, 40%);
+      font-family: FontAwesome;
+      content: $active-icon;
+      }
+  }
+  &[disabled] {
+    border: none;
+    background-image: none;
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+    filter: alpha(opacity=40);
+    -khtml-opacity: 0.40;
+    -moz-opacity: 0.40;
+    opacity: 0.40;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+html {
+  font-family: 'Helvetica';
+}
+
+
+#create-column {
+  display: inline-block;
+  margin: 10px;
+
+  #new-column {
+    font-size: 28px;
+    width: 500px;
+    float: left;
+    padding: 5px;
+    font-family: Helvetica;
+  }
+
+  .add-column {
+    @include button($fa-var-plus, $blue, 42px);
+    padding-top: 5px;
+    padding-bottom: 5px;
+    float: right;
     }
 }
 
-$blue: rgb(0, 120, 231);
-$red: rgb(202, 60, 60);
-
-.new-environment {
-  @include button($blue);
-}
-
-.add-note, .add-column {
-  @include button($blue, 45%);
+.note {
+  span {
+    input {
+      margin-right: 10px;
+    }
+    .edit-note {
+      @include button($fa-var-pencil, #FABA2D, 16px);
+      padding-left: 10px;
+    }
+  }
 }
 
 .delete-column {
-  @include button($red, 45%);
+  position: absolute;
+  top: 0;
+  right: 0;
+  @include button($fa-var-times, $red, 32px);
 }
 
 .vote {
-  @include button($blue, 25%);
+  @include button($fa-var-thumbs-o-up, $blue, 24px, $fa-var-thumbs-up);
 }
 
 .delete-note {
-  @include button($red, 25%);
+  @include button($fa-var-times, $red);
+}
+
+#columns {
+  width: 100%;
+  margin: 10px;
+
+  .column {
+    min-height: 400px;
+    width: 30%;
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    padding: 5px;
+    margin: 5px;
+    border: 2px solid lighten($dark, 50%);
+    border-radius: 10px;
+
+    h1 {
+      color: $dark;
+      text-align: center;
+    }
+
+    .create-note {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 10px;
+
+
+      .add-note {
+        @include button($fa-var-plus, $blue, 65px);
+        padding-top: 0;
+        padding-bottom: 0;
+        float: left;
+      }
+    }
+  }
+}
+
+ textarea {
+   float: left;
+   width: 80%;
+   min-height: 60px;
+   border: 1px solid lighten($dark, 40%);
+   padding: 5px;
+   font-family: Helvetica;
+   font-size: 16px;
+   overflow: auto;
 }
