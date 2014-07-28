@@ -70,9 +70,9 @@ body { margin: 0; }
       }      
     }
 
-    .delete-column {
-      color: darken($color, 30%);
+    .cancel-delete:hover {
       background: $color;
+      color: darken($color, 30%);
     }
   }
 
@@ -200,10 +200,42 @@ body { margin: 0; }
       .delete-column {
         @include condensed-text;
         @include transitions;
+        background: $grey;
+        color: darken($grey, 20%);
+        margin-top: 1em;
         padding: 5px;
         text-align: center;
         
         &:hover {
+          background: red;
+          color: darken(red, 30%);
+        }
+      }
+
+      .are-you-sure {
+        @include flex-box-row;
+        -webkit-justify-content: space-between;
+        justify-content: space-between;
+        
+        margin-top: 1em;
+        padding: 5px;
+        text-align: center;
+        
+        span, .confirm-delete, .cancel-delete {
+          @include condensed-text;
+          @include transitions;
+          margin: 0 5px;
+          
+          -webkit-flex-grow: 1;
+          flex-grow: 1;
+        }
+
+        .confirm-delete, .cancel-delete {
+          background: $grey;
+          color: darken($grey, 20%);
+        }
+
+        .confirm-delete:hover {
           background: red;
           color: darken(red, 30%);
         }

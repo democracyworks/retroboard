@@ -99,16 +99,38 @@
                                 :className "add-column"
                                 :disabled (empty? header)}))))))
 
+(defn display [show]
+  (if show
+    #js {}
+    #js {:display "none"}))
+
 (defn delete-column-button [app owner]
   (reify
-    om/IRender
-    (render [_]
+    om/IInitState
+    (init-state [_] {:deleting-column false})
+    om/IRenderState
+    (render-state [this {:keys [deleting-column]}]
       (let [{:keys [connection column-id]} app
+            ask-to-confirm (fn [el]
+                             (om/set-state! owner :deleting-column true))
+            do-not-delete (fn [el]
+                             (om/set-state! owner :deleting-column false))
             delete-column (fn []
                             (delete-column (om/value connection) column-id))]
-        (dom/div #js {:onClick delete-column
-                         :className "delete-column"}
-                    "Delete Column")))))
+        (dom/div nil
+                 (dom/div #js {:onClick ask-to-confirm
+                               :style (display (not deleting-column))
+                               :className "delete-column"}
+                          "Delete Column")
+                 (dom/div #js {:style (display deleting-column)
+                               :className "are-you-sure"}
+                          (dom/span nil "Are You Sure?")
+                          (dom/div #js {:onClick delete-column
+                                        :className "confirm-delete"}
+                                   "Yes")
+                          (dom/div #js {:onClick do-not-delete
+                                        :className "cancel-delete"}
+                                   "No")))))))
 
 (defn note-placeholder []
   (first (shuffle ["I just think that..."
@@ -182,11 +204,6 @@
         (dom/button #js {:onClick create-env
                          :className "new-environment"}
                     "New Environment")))))
-
-(defn display [show]
-  (if show
-    #js {}
-    #js {:display "none"}))
 
 (defn handle-change [e data edit-key owner]
   (om/transact! data edit-key (fn [_] (.. e -target -value))))
