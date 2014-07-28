@@ -192,6 +192,15 @@
     om/IInitState
     (init-state [_]
       {:editing false})
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (let [input (om/get-node owner "input")
+            val (.-value input)]
+        (when (and (om/get-state owner :editing)
+                   (not (:editing prev-state)))
+          (.focus input)
+          (set! (.-value input) "")
+          (set! (.-value input) val))))
     om/IRenderState
     (render-state [_ {:keys [editing]}]
       (let [text (get data edit-key)]
@@ -203,10 +212,11 @@
                  #js {:className "note-input"
                       :style (display editing)
                       :value text
+                      :ref "input"
                       :onChange #(handle-change % data edit-key owner)
-                      :onKeyUp #(case (.-keyCode %)
-                                     13 (end-edit text owner on-edit)
-                                     nil)
+                      :onKeyDown #(case (.-keyCode %)
+                                    13 (end-edit text owner on-edit)
+                                    nil)
                       :onBlur (fn [e]
                                 (when (om/get-state owner :editing)
                                   (end-edit text owner on-edit)))})
