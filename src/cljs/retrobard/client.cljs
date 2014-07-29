@@ -259,7 +259,7 @@
                         (map (fn [note] (om/build note-view {:connection connection
                                                             :column-id id
                                                             :note note}))
-                             (sort-by first (:notes column))))
+                             (sort-by first > (:notes column))))
                  (om/build create-note-button {:connection connection
                                                :column-id id}))))))
 
