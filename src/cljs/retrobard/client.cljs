@@ -285,8 +285,6 @@
         (dom/div #js {:className "column"}
                  (dom/h1 nil (:header column))
                  (om/build create-note-button {:connection connection
-                                               :column-id id})
-                 (apply dom/div nil
                                                :column-id id})                 
                  (apply dom/div #js {:className "notes"}
                         (map (fn [note] (om/build note-view {:connection connection
