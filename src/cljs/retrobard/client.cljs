@@ -111,14 +111,15 @@
     om/IRenderState
     (render-state [this {:keys [deleting-column]}]
       (let [{:keys [connection column-id]} app
-            ask-to-confirm (fn [el]
+            begin-delete-column (fn [el]
                              (om/set-state! owner :deleting-column true))
-            do-not-delete (fn [el]
+            end-delete-column (fn [el]
                              (om/set-state! owner :deleting-column false))
             delete-column (fn []
-                            (delete-column (om/value connection) column-id))]
+                            (delete-column (om/value connection) column-id)
+                            (end-delete-column))]
         (dom/div nil
-                 (dom/div #js {:onClick ask-to-confirm
+                 (dom/div #js {:onClick begin-delete-column
                                :style (display (not deleting-column))
                                :className "delete-column"}
                           "Delete Column")
@@ -128,7 +129,7 @@
                           (dom/div #js {:onClick delete-column
                                         :className "confirm-delete"}
                                    "Yes")
-                          (dom/div #js {:onClick do-not-delete
+                          (dom/div #js {:onClick end-delete-column
                                         :className "cancel-delete"}
                                    "No")))))))
 
