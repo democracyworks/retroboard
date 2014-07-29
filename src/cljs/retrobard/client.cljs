@@ -285,12 +285,12 @@
         (dom/div #js {:className "column"}
                  (dom/h1 nil (:header column))
                  (om/build create-note-button {:connection connection
-                                               :column-id id})                 
+                                               :column-id id})
                  (apply dom/div #js {:className "notes"}
                         (map (fn [note] (om/build note-view {:connection connection
                                                             :column-id id
                                                             :note note}))
-                             (sort-by first > (:notes column))))
+                             (sort-by first (:notes column))))
                  (om/build delete-column-button {:connection connection
                                                  :column-id id}))))))
 
