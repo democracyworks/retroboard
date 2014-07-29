@@ -104,9 +104,13 @@ body { margin: 0; }
     width: 92%;
 
     .column {
+      -webkit-flex-grow: 1;
+      flex-grow: 1;
       justify-content: space-around;
+
       margin: 1% 1% 50px 1%;
       width: 23%;
+      
       @media all and (max-width: 1000px) { width: 31%; } // Medium Size Screens
       @media all and (max-width: 800px) { width: 48%; } // Small Size Screens
       @media all and (max-width: 500px) { width: 98%; } // Mobile
@@ -141,6 +145,12 @@ body { margin: 0; }
       .note-wrapper {
         margin: 15px auto;
         width: 100%;
+
+        white-space: pre-wrap;      /* CSS3 */   
+        white-space: -moz-pre-wrap; /* Firefox */    
+        white-space: -pre-wrap;     /* Opera <7 */   
+        white-space: -o-pre-wrap;   /* Opera 7 */    
+        word-wrap: break-word;      /* IE */
         
         .note-content {
           p {
