@@ -111,9 +111,9 @@
     om/IRenderState
     (render-state [this {:keys [deleting-column]}]
       (let [{:keys [connection column-id]} app
-            begin-delete-column (fn [el]
+            begin-delete-column (fn []
                              (om/set-state! owner :deleting-column true))
-            end-delete-column (fn [el]
+            end-delete-column (fn []
                              (om/set-state! owner :deleting-column false))
             delete-column (fn []
                             (delete-column (om/value connection) column-id)
