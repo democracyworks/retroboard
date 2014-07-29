@@ -213,11 +213,22 @@
   (om/set-state! owner :editing false)
   (cb text))
 
+(defn focus-and-set-cursor [textarea]
+  (let [val (.-value textarea)]
+    (.focus textarea)
+    (set! (.-value textarea) "")
+    (set! (.-value textarea) val)))
+
 (defn editable [data owner {:keys [edit-key on-edit] :as opts}]
   (reify
     om/IInitState
     (init-state [_]
       {:editing false})
+    om/IDidUpdate
+    (did-update [this prev-props prev-state]
+      (when (and (om/get-state owner :editing)
+                 (not (:editing prev-state)))
+        (focus-and-set-cursor (om/get-node owner "input"))))
     om/IRenderState
     (render-state [_ {:keys [editing]}]
       (let [text (get data edit-key)]
@@ -229,10 +240,11 @@
                  #js {:className "edit-content-input"
                       :style (display editing)
                       :value text
+                      :ref "input"
                       :onChange #(handle-change % data edit-key owner)
-                      :onKeyUp #(case (.-keyCode %)
-                                     13 (end-edit text owner on-edit)
-                                     nil)
+                      :onKeyDown #(case (.-keyCode %)
+                                    13 (end-edit text owner on-edit)
+                                    nil)
                       :onBlur (fn [e]
                                 (when (om/get-state owner :editing)
                                   (end-edit text owner on-edit)))})
@@ -277,10 +289,9 @@
                         (map (fn [note] (om/build note-view {:connection connection
                                                             :column-id id
                                                             :note note}))
-                             (sort-by first (:notes column))))
-                 (om/build delete-column-button {:connection connection
-                                                 :column-id id}))))))
-
+                             (sort-by first > (:notes column))))
+                 (om/build create-note-button {:connection connection
+                                               :column-id id}))))))
 
 (defn error-handler [app]
   (let [error-chan (chan)]
