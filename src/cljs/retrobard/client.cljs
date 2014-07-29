@@ -290,8 +290,8 @@
                                                             :column-id id
                                                             :note note}))
                              (sort-by first > (:notes column))))
-                 (om/build create-note-button {:connection connection
-                                               :column-id id}))))))
+                 (om/build delete-column-button {:connection connection
+                                                 :column-id id}))))))
 
 (defn error-handler [app]
   (let [error-chan (chan)]
