@@ -152,8 +152,8 @@
                           (when (seq text)
                             (new-note (om/value connection) (temprid) column-id text)
                             (om/set-state! owner :text "")))]
-        (dom/div nil
-                 (dom/textarea #js {:id "new-note" :name "new-note"
+        (dom/div #js {:className "new-note-wrapper"}
+                 (dom/textarea #js {:className "new-note" :name "new-note"
                                     :placeholder (note-placeholder)
                                     :type "text"
                                     :value text
@@ -262,7 +262,7 @@
       (let [{:keys [connection column-id note]} app
             [id note] note]
         (dom/div #js {:className "note-wrapper"}
-                 (dom/div {:className "note"}
+                 (dom/div #js {:className "note"}
                           (om/build editable note
                                     {:opts {:edit-key :text
                                             :on-edit (partial edit-note connection id column-id)}}))
@@ -287,6 +287,8 @@
                  (om/build create-note-button {:connection connection
                                                :column-id id})
                  (apply dom/div nil
+                                               :column-id id})                 
+                 (apply dom/div #js {:className "notes"}
                         (map (fn [note] (om/build note-view {:connection connection
                                                             :column-id id
                                                             :note note}))

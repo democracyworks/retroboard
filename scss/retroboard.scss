@@ -18,6 +18,7 @@ body { margin: 0; }
   
   $grey: #dddddd;
   $main-text-color: #2d2d2d;
+  $main-text-size: 0.75em;
   $main-text-font: 'Open Sans', sans-serif;
   $condensed-font: 'Open Sans Condensed', sans-serif;
 
@@ -62,11 +63,14 @@ body { margin: 0; }
     .note-wrapper {
       background: white;
       border: 2px solid $color;
-      border-top: 25px solid $color;
+      border-top: 15px solid $color;
 
-      .delete-note:hover, .vote:hover {
-        background: $color;
-        color: darken($color, 30%);
+      textarea.edit-content-input {
+        border-bottom: 1px dotted $color;
+      }
+      
+      .vote:hover {
+        color: $color;
       }      
     }
 
@@ -75,6 +79,13 @@ body { margin: 0; }
       color: darken($color, 30%);
     }
   }
+
+  @mixin warning {
+    background: red;
+    color: darken(red, 30%);
+  }
+
+  input:focus, textarea:focus { outline: none; }
 
   #create-column {
     background: $main-text-color;
@@ -115,86 +126,124 @@ body { margin: 0; }
       @media all and (max-width: 800px) { width: 48%; } // Small Size Screens
       @media all and (max-width: 500px) { width: 98%; } // Mobile
       
-      h1 { @include condensed-text; }
-
-      .add-note {
-        @include transitions;
+      h1 {
         @include condensed-text;
-        @include unselectable-text;
-        background: $grey;
-        color: darken($grey, 20%);
-        cursor: pointer;
-        padding: 5px;
-        text-align: center;
-        &:hover { color: darken($grey, 40%); }
+        margin-top: 0.25em;
       }
 
-      textarea#new-note {
-        color: lighten($main-text-color, 20%);
-        border: 2px solid $grey;
-        font-family: $main-text-font;
-        font-size: 1em;
-        height: 100px;
-        line-height: 1.35em;
-        margin: 0px;
-        padding: 10px;
-        resize: none;
-        width: 100%;
-      }
+      .new-note-wrapper {
+        margin-bottom: 10px;
 
-      .note-wrapper {
-        margin: 15px auto;
-        width: 100%;
-
-        white-space: pre-wrap;      /* CSS3 */   
-        white-space: -moz-pre-wrap; /* Firefox */    
-        white-space: -pre-wrap;     /* Opera <7 */   
-        white-space: -o-pre-wrap;   /* Opera 7 */    
-        word-wrap: break-word;      /* IE */
-        
-        .note-content {
-          p {
-            margin: 1em 1em 1.5em;
-          }
-          
-          .edit-note-button {
-            display: none;
-          }
+        .add-note {
+          @include transitions;
+          @include condensed-text;
+          @include unselectable-text;
+          background: $grey;
+          color: darken($grey, 20%);
+          cursor: pointer;
+          padding: 5px;
+          text-align: center;
+          &:hover { color: darken($grey, 40%); }
         }
-        textarea.edit-content-input {
-          color: $main-text-color;
-          font-size: 1em;
-          font-weight: 400;
+
+        textarea.new-note {
+          color: lighten($main-text-color, 20%);
+          border: 2px solid $grey;
+          font-family: $main-text-font;
+          font-size: $main-text-size;
+          height: 6em;
           line-height: 1.35em;
-          margin: 1em 5%;
-          min-height: 75px;
-          width: 90%;
+          margin: 0px;
+          padding: 10px;
+          resize: none;
+          width: 100%;
         }
       }
-      
-      .vote-delete-row {
+      .notes {
         @include flex-box-row;
-        @include unselectable-text;
         -webkit-justify-content: space-between;
         justify-content: space-between;
+        
+        .note { width: 100%; }
 
-        div {
-          @include transitions;
-          padding: 7px 5px 5px;
-          text-align: center;
+        .note-wrapper {
+          @include flex-box-row;
+
+          margin: 0 2% 10px 0;
+          &:nth-child(2n) { margin: 0 0 10px 2%; }
+          &:nth-child(odd):last-child { margin: 0 0 10px 0; }
+
+          width: 46%;
+
+          white-space: pre-wrap;      /* CSS3 */   
+          white-space: -moz-pre-wrap; /* Firefox */    
+          white-space: -pre-wrap;     /* Opera <7 */   
+          white-space: -o-pre-wrap;   /* Opera 7 */    
+          word-wrap: break-word;      /* IE */
           
-          &.delete-note { padding-left: 7px; }
-          &.vote { padding-right: 7px; }
-          &.votes { cursor: default; }
+          .note-content {
+            p {
+              font-size: $main-text-size;
+              margin: $main-text-size;
+            }
+            
+            .edit-note-button {
+              display: none;
+            }
+          }
 
-          &.delete-note, &.vote {
-            color: $grey;
-            &:hover {
-              cursor: pointer;
+          textarea.edit-content-input {
+            border: none;
+            color: $main-text-color;
+            font-family: $main-text-font;
+            font-size: $main-text-size;
+            line-height: 1.45em;
+            margin: $main-text-size;
+            min-height: 75px;
+            padding: 0;
+            resize: none;
+            width: 93%;
+          }
+        }
+        
+        .vote-delete-row {
+          @include flex-box-row;
+          @include unselectable-text;
+          -webkit-align-self: flex-end;
+          align-self: flex-end;
+
+          font-size: $main-text-size;
+
+          -webkit-justify-content: space-between;
+          justify-content: space-between;
+
+          width: 100%;
+
+          div {
+            @include transitions;
+            padding-bottom: 3px;
+            text-align: center;
+            
+            &.delete-note {
+              padding-right: 5px;
+              
+              &:hover { color: red; }
+            }
+
+            &.vote { padding-left: 5px; }
+            &.votes { cursor: default; }
+
+            &.delete-note, &.vote {
+              color: $grey;
+              
+              &:hover {
+                cursor: pointer;
+              }
             }
           }
         }
       }
+      
 
       &:nth-child(10n+1) { @include color-swap($color0); }
       &:nth-child(10n+2) { @include color-swap($color1); }
@@ -212,13 +261,11 @@ body { margin: 0; }
         @include transitions;
         background: $grey;
         color: darken($grey, 20%);
-        margin-top: 1em;
         padding: 5px;
         text-align: center;
         
         &:hover {
-          background: red;
-          color: darken(red, 30%);
+          @include warning;
         }
       }
 
@@ -246,8 +293,7 @@ body { margin: 0; }
         }
 
         .confirm-delete:hover {
-          background: red;
-          color: darken(red, 30%);
+          @include warning;
         }
       }
     }
