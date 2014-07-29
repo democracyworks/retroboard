@@ -1,164 +1,255 @@
+@import url(http://fonts.googleapis.com/css?family=Open+Sans);
+@import url(http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700);
 
-$blue: #3EC3D5;
-$red: #E9405A;
-$dark: #313540;
-$transparent: rgba(0,0,0,0);
+body { margin: 0; }
 
-$fa-var-times: "\f00d";
-$fa-var-thumbs-o-up: "\f087";
-$fa-var-thumbs-up: "\f164";
-$fa-var-plus: "\f067";
-$fa-var-pencil: "\f040";
+#retroboard {
+  $color0: #FFAA6D;
+  $color1: #E864E6;
+  $color2: #6E99FF;
+  $color3: #58E890;
+  $color4: #FFF661;
 
+  $color5: darken($color0, 30%);
+  $color6: darken($color1, 30%);
+  $color7: darken($color2, 30%);
+  $color8: darken($color3, 30%);
+  $color9: darken($color4, 30%);
+  
+  $grey: #dddddd;
+  $main-text-color: #2d2d2d;
+  $main-text-font: 'Open Sans', sans-serif;
+  $condensed-font: 'Open Sans Condensed', sans-serif;
 
+  color: $main-text-color;
+  font-family: $main-text-font;
 
-
-@mixin button($icon, $color, $font-size: 24px, $active-icon:1) {
-  &:before {
-    font-size: $font-size;
-    color: $color;
-    font-family: FontAwesome;
-    content: $icon;
+  @mixin flex-box-row {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-flow: row wrap;
+    flex-flow: row wrap;
   }
-  display:inline-block;
-  vertical-align: baseline;
-  text-align: center;
-  padding: 0.5em 1em;
-  border: none rgba(0, 0, 0, 0);
-  background-color: $transparent;
-  text-decoration: none;
-  border-radius: 2px;
-  color: $dark;
-  border-radius: 4px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 
-  -webkit-user-select: none;  /* Chrome all / Safari all */
-  -moz-user-select: none;     /* Firefox all */
-  -ms-user-select: none;
+  @mixin transitions {
+    -webkit-transition: all 0.2s linear;
+    -moz-transition: all 0.2s linear;
+    -o-transition: all 0.2s linear;
+    transition: all 0.2s linear;
+  }
 
-  &:hover {
-    &:before {
-      color: darken($color, 20%);
+  @mixin condensed-text {
+    font-family: $condensed-font;
+    text-transform: uppercase;
+  }
+
+  @mixin unselectable-text {
+    -webkit-user-select: none; /* Chrome/Safari */        
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+ */
+
+    /* Rules below not implemented in browsers yet */
+    -o-user-select: none;
+    user-select: none;
+  }
+
+  @mixin color-swap($color) {    
+    h1 { border-bottom: 3px solid $color; }
+
+    .note-wrapper {
+      background: white;
+      border: 2px solid $color;
+      border-top: 25px solid $color;
+
+      .delete-note:hover, .vote:hover {
+        background: $color;
+        color: darken($color, 30%);
+      }      
+    }
+
+    .cancel-delete:hover {
+      background: $color;
+      color: darken($color, 30%);
     }
   }
-  &:active {
-    &:before {
-      font-size: $font-size;
-      color: darken($color, 40%);
-      font-family: FontAwesome;
-      content: $active-icon;
-      }
-  }
-  &[disabled] {
-    border: none;
-    background-image: none;
-    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
-    filter: alpha(opacity=40);
-    -khtml-opacity: 0.40;
-    -moz-opacity: 0.40;
-    opacity: 0.40;
-    cursor: not-allowed;
-    box-shadow: none;
-  }
-}
 
-html {
-  font-family: 'Helvetica';
-}
-
-
-#create-column {
-  display: inline-block;
-  margin: 10px;
-
-  #new-column {
-    font-size: 28px;
-    width: 500px;
-    float: left;
-    padding: 5px;
-    font-family: Helvetica;
-  }
-
-  .add-column {
-    @include button($fa-var-plus, $blue, 42px);
-    padding-top: 5px;
-    padding-bottom: 5px;
-    float: right;
-    }
-}
-
-.note {
-  span {
+  #create-column {
+    background: $main-text-color;
+      
     input {
-      margin-right: 10px;
-    }
-    .edit-note {
-      @include button($fa-var-pencil, #FABA2D, 16px);
-      padding-left: 10px;
-    }
-  }
-}
-
-.delete-column {
-  position: absolute;
-  top: 0;
-  right: 0;
-  @include button($fa-var-times, $red, 32px);
-}
-
-.vote {
-  @include button($fa-var-thumbs-o-up, $blue, 24px, $fa-var-thumbs-up);
-}
-
-.delete-note {
-  @include button($fa-var-times, $red);
-}
-
-#columns {
-  width: 100%;
-  margin: 10px;
-
-  .column {
-    min-height: 400px;
-    width: 30%;
-    position: relative;
-    display: inline-block;
-    vertical-align: top;
-    padding: 5px;
-    margin: 5px;
-    border: 2px solid lighten($dark, 50%);
-    border-radius: 10px;
-
-    h1 {
-      color: $dark;
-      text-align: center;
-    }
-
-    .create-note {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
+      border: 1px solid $grey;
+      color: lighten($main-text-color, 20%);
+      font-size: 1em;
+      line-height: 1.35em;
+      margin: 10px 4%;
       padding: 10px;
+      width: 46%;
+      @media all and (max-width: 800px) { width: 92%; } // Small Size Screens
+    }
+    
+    .add-column { display: none; }
+  }
 
+  #columns {
+    @include flex-box-row;
+    -webkit-justify-content: flex-start;
+    justify-content: flex-start;
+
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    width: 92%;
+
+    .column {
+      -webkit-flex-grow: 1;
+      flex-grow: 1;
+      justify-content: space-around;
+
+      margin: 1% 1% 50px 1%;
+      width: 23%;
+      
+      @media all and (max-width: 1000px) { width: 31%; } // Medium Size Screens
+      @media all and (max-width: 800px) { width: 48%; } // Small Size Screens
+      @media all and (max-width: 500px) { width: 98%; } // Mobile
+      
+      h1 { @include condensed-text; }
 
       .add-note {
-        @include button($fa-var-plus, $blue, 65px);
-        padding-top: 0;
-        padding-bottom: 0;
-        float: left;
+        @include transitions;
+        @include condensed-text;
+        @include unselectable-text;
+        background: $grey;
+        color: darken($grey, 20%);
+        cursor: pointer;
+        padding: 5px;
+        text-align: center;
+        &:hover { color: darken($grey, 40%); }
+      }
+
+      textarea#new-note {
+        color: lighten($main-text-color, 20%);
+        border: 2px solid $grey;
+        font-family: $main-text-font;
+        font-size: 1em;
+        height: 100px;
+        line-height: 1.35em;
+        margin: 0px;
+        padding: 10px;
+        resize: none;
+        width: 100%;
+      }
+
+      .note-wrapper {
+        margin: 15px auto;
+        width: 100%;
+
+        white-space: pre-wrap;      /* CSS3 */   
+        white-space: -moz-pre-wrap; /* Firefox */    
+        white-space: -pre-wrap;     /* Opera <7 */   
+        white-space: -o-pre-wrap;   /* Opera 7 */    
+        word-wrap: break-word;      /* IE */
+        
+        .note-content {
+          p {
+            margin: 1em 1em 1.5em;
+          }
+          
+          .edit-note-button {
+            display: none;
+          }
+        }
+        textarea.edit-content-input {
+          color: $main-text-color;
+          font-size: 1em;
+          font-weight: 400;
+          line-height: 1.35em;
+          margin: 1em 5%;
+          min-height: 75px;
+          width: 90%;
+        }
+      }
+      
+      .vote-delete-row {
+        @include flex-box-row;
+        @include unselectable-text;
+        -webkit-justify-content: space-between;
+        justify-content: space-between;
+
+        div {
+          @include transitions;
+          padding: 7px 5px 5px;
+          text-align: center;
+          
+          &.delete-note { padding-left: 7px; }
+          &.vote { padding-right: 7px; }
+          &.votes { cursor: default; }
+
+          &.delete-note, &.vote {
+            color: $grey;
+            &:hover {
+              cursor: pointer;
+            }
+          }
+        }
+      }
+
+      &:nth-child(10n+1) { @include color-swap($color0); }
+      &:nth-child(10n+2) { @include color-swap($color1); }
+      &:nth-child(10n+3) { @include color-swap($color2); }
+      &:nth-child(10n+4) { @include color-swap($color3); }
+      &:nth-child(10n+5) { @include color-swap($color4); }
+      &:nth-child(10n+6) { @include color-swap($color5); }
+      &:nth-child(10n+7) { @include color-swap($color6); }
+      &:nth-child(10n+8) { @include color-swap($color7); }
+      &:nth-child(10n+9) { @include color-swap($color8); }
+      &:nth-child(10n+10) { @include color-swap($color9); }
+      
+      .delete-column {
+        @include condensed-text;
+        @include transitions;
+        background: $grey;
+        color: darken($grey, 20%);
+        margin-top: 1em;
+        padding: 5px;
+        text-align: center;
+        
+        &:hover {
+          background: red;
+          color: darken(red, 30%);
+        }
+      }
+
+      .are-you-sure {
+        @include flex-box-row;
+        -webkit-justify-content: space-between;
+        justify-content: space-between;
+        
+        margin-top: 1em;
+        padding: 5px;
+        text-align: center;
+        
+        span, .confirm-delete, .cancel-delete {
+          @include condensed-text;
+          @include transitions;
+          margin: 0 5px;
+          
+          -webkit-flex-grow: 1;
+          flex-grow: 1;
+        }
+
+        .confirm-delete, .cancel-delete {
+          background: $grey;
+          color: darken($grey, 20%);
+        }
+
+        .confirm-delete:hover {
+          background: red;
+          color: darken(red, 30%);
+        }
       }
     }
   }
-}
-
- textarea {
-   float: left;
-   width: 80%;
-   min-height: 60px;
-   border: 1px solid lighten($dark, 40%);
-   padding: 5px;
-   font-family: Helvetica;
-   font-size: 16px;
-   overflow: auto;
 }
