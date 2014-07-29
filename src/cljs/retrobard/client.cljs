@@ -157,9 +157,10 @@
                                     :placeholder (note-placeholder)
                                     :type "text"
                                     :value text
-                                    :onKeyUp (fn [e]
-                                               (when (= 13 (.-keyCode e))
-                                                 (create-note)))
+                                    :onKeyDown (fn [e]
+                                                 (when (= 13 (.-keyCode e))
+                                                   (create-note)
+                                                   (.preventDefault e)))
                                     :onChange (fn [e]
                                                 (om/set-state! owner :text
                                                                (.. e -target -value)))})
@@ -284,7 +285,7 @@
         (dom/div #js {:className "column"}
                  (dom/h1 nil (:header column))
                  (om/build create-note-button {:connection connection
-                                               :column-id id})                 
+                                               :column-id id})
                  (apply dom/div nil
                         (map (fn [note] (om/build note-view {:connection connection
                                                             :column-id id
