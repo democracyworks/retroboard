@@ -187,6 +187,12 @@
   (om/set-state! owner :editing false)
   (cb text))
 
+(defn focus-and-set-cursor [textarea]
+  (let [val (.-value textarea)]
+    (.focus textarea)
+    (set! (.-value textarea) "")
+    (set! (.-value textarea) val)))
+
 (defn editable [data owner {:keys [edit-key on-edit] :as opts}]
   (reify
     om/IInitState
@@ -194,13 +200,9 @@
       {:editing false})
     om/IDidUpdate
     (did-update [this prev-props prev-state]
-      (let [input (om/get-node owner "input")
-            val (.-value input)]
-        (when (and (om/get-state owner :editing)
-                   (not (:editing prev-state)))
-          (.focus input)
-          (set! (.-value input) "")
-          (set! (.-value input) val))))
+      (when (and (om/get-state owner :editing)
+                 (not (:editing prev-state)))
+        (focus-and-set-cursor (om/get-node owner "input"))))
     om/IRenderState
     (render-state [_ {:keys [editing]}]
       (let [text (get data edit-key)]
