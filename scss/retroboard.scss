@@ -230,6 +230,7 @@ body { margin: 0; }
             p {
               font-size: $main-text-size;
               margin: $main-text-size;
+              min-height: 1em;
             }
 
             .edit-note-button {
