@@ -1,5 +1,6 @@
 (ns retroboard.server
   (:require [retroboard.resource :as resource]
+            [retroboard.util :refer [unique-str-generator]]
             [clojure.edn :as edn]
             [org.httpkit.server :refer :all]
             [ring.util.response :refer [resource-response]]
@@ -63,7 +64,7 @@
             (dorun (map ping (all-clients)))
             (recur))))
 
-(def env-resource-factory (new-resource-factory))
+(def env-resource-factory (unique-str-generator 5))
 
 (defmethod cmd-handler :new-environment [data channel]
   (println "New environment")

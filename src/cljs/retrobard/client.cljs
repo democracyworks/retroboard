@@ -345,10 +345,8 @@
 
 (defn get-env-id []
   (let [pathname (.-pathname js/location)
-        env-id (second (re-find #"e/([0-9]+)" pathname))]
-    (if env-id
-      (js/parseInt env-id)
-      nil)))
+        env-id (second (re-find #"e/(.+)" pathname))]
+    env-id))
 
 (defn setup! []
   (swap! app-state assoc :id (get-env-id))
