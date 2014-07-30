@@ -42,8 +42,6 @@
     (put! to-send {:cmd :new-environment})
     return-chan))
 
-
-
 (defactions apply-action
   (new-column [id header state]
               (assoc state id {:header header :notes {}}))
@@ -57,6 +55,17 @@
             (update-in state [column-id :notes note-id :votes] conj id))
   (edit-note [id column-id new-text state]
              (assoc-in state [column-id :notes id :text] new-text)))
+
+(defn send-actions [conn actions]
+  (put! (:to-send conn)
+        {:cmd :actions
+         :actions actions}))
+
+(defn retrospective [conn]
+  (send-actions conn
+                [(new-column (temprid 0) "The Good")
+                 (new-column (temprid 1) "The Bad")
+                 (new-column (temprid 2) "The Unknown")]))
 
 (defn apply-actions [actions initial-state]
   (reduce (fn [state action]
@@ -312,15 +321,15 @@
     (will-mount [_]
       (let [action-chan (chan)]
         (error-handler app)
-        (if (:id app)
+        (when (:id app)
           (put! (get-in (if (om/rendering?) app @app) [:connection :to-send])
                 {:cmd :register :action (:id app)}))
         (sub (get-in app [:connection :incoming]) :cmds action-chan)
-        (go-loop []
-                 (let [actions (:commands (<! action-chan))]
-                   (om/update! app :connected :connected)
-                   (om/transact! app :state (partial apply-actions actions))
-                   (recur)))))
+        (go (let [actions (:commands (<! action-chan))]
+              (om/update! app :connected :connected)
+              (go-loop [actions actions]
+                       (om/transact! app :state (partial apply-actions actions))
+                       (recur (:commands (<! action-chan))))))))
     om/IRenderState
     (render-state [this state]
       (let [connection (om/value (:connection app))

@@ -33,13 +33,16 @@
   (when-let [env (get-env channel)]
     (swap! (:clients env) disj channel)))
 
-(defmethod cmd-handler :action [data channel]
+(defmethod cmd-handler :actions [data channel]
   (println "Received " data)
   (when-let [env (get-env channel)]
-    (let [action (resource/replace-ids (:resource-factory env) (:action data))]
-      (swap! (:history env) conj action)
-      (dorun (map #(send! % (pr-str {:cmd :cmds :commands [action]}))
+    (let [actions (resource/replace-ids (:resource-factory env) (:actions data))]
+      (swap! (:history env) concat actions)
+      (dorun (map #(send! % (pr-str {:cmd :cmds :commands actions}))
                   (-> env :clients deref))))))
+
+(defmethod cmd-handler :action [data channel]
+  (cmd-handler {:cmd :actions :actions [(:action data)]} channel))
 
 (defmethod cmd-handler :new-resource [data channel]
   (println "New resource")
