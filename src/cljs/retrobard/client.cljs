@@ -207,7 +207,7 @@
                          :className "new-environment"}
                     "New Environment")))))
 
-(defn handle-change [e data edit-key owner]
+(defn handle-change [e data edit-key]
   (om/transact! data edit-key (fn [_] (.. e -target -value))))
 
 (defn end-edit [text owner cb]
@@ -224,15 +224,18 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:editing false})
+      {:editing false
+       :edit-text (get data edit-key)})
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (when (and (om/get-state owner :editing)
                  (not (:editing prev-state)))
         (focus-and-set-cursor (om/get-node owner "input"))))
     om/IRenderState
-    (render-state [_ {:keys [editing]}]
-      (let [text (get data edit-key)]
+    (render-state [this {:keys [editing edit-text]}]
+      (let [text (get data edit-key)
+            reset #(om/set-state! owner {:editing false
+                                         :edit-text text})]
         (dom/div #js {:className "note-content"}
                 (dom/p #js {:style (display (not editing))
                             :onClick (fn [el] (om/set-state! owner :editing true))}
@@ -240,15 +243,19 @@
                 (dom/textarea
                  #js {:className "edit-content-input"
                       :style (display editing)
-                      :value text
+                      :value edit-text
                       :ref "input"
-                      :onChange #(handle-change % data edit-key owner)
-                      :onKeyDown #(case (.-keyCode %)
-                                    13 (end-edit text owner on-edit)
-                                    nil)
+                      :onChange #(om/set-state! owner :edit-text (.. % -target -value))
+                      :onKeyDown (fn [e]
+                                   (case (.-keyCode e)
+                                     13 (do (handle-change e data edit-key)
+                                            (end-edit edit-text owner on-edit)
+                                            (.preventDefault e))
+                                     27 (reset)
+                                     nil))
                       :onBlur (fn [e]
                                 (when (om/get-state owner :editing)
-                                  (end-edit text owner on-edit)))}))))))
+                                  (reset)))}))))))
 
 (defn note-view [app owner]
   (reify
