@@ -1,14 +1,14 @@
 (ns retroboard.client
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [retroboard.actions :as a]
             [retroboard.config :as config]
             [retroboard.resource :refer [temprid]]
             [cljs.core.async :refer [chan <! put! pub sub unsub]]
             [goog.events :as events]
             [cljs.reader :as reader]
             [clojure.string :refer [split]])
-  (:require-macros [retroboard.macros :refer [defactions]]
-                   [cljs.core.async.macros :refer [go go-loop]])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
   (:import goog.net.WebSocket
            goog.net.WebSocket.EventType))
 
@@ -42,19 +42,6 @@
     (put! to-send {:cmd :new-environment})
     return-chan))
 
-(defactions apply-action
-  (new-column [id header state]
-              (assoc state id {:header header :notes {}}))
-  (delete-column [id state]
-                 state (dissoc state id))
-  (new-note [id column-id text state]
-            (assoc-in state [column-id :notes id] {:text text :votes #{}}))
-  (delete-note [column-id id state]
-               (update-in state [column-id :notes] dissoc id))
-  (new-vote [id column-id note-id state]
-            (update-in state [column-id :notes note-id :votes] conj id))
-  (edit-note [id column-id new-text state]
-             (assoc-in state [column-id :notes id :text] new-text)))
 
 (defn send-actions [conn actions]
   (put! (:to-send conn)
@@ -63,13 +50,13 @@
 
 (defn retrospective [conn]
   (send-actions conn
-                [(new-column (temprid 0) "The Good")
-                 (new-column (temprid 1) "The Bad")
-                 (new-column (temprid 2) "The Unknown")]))
+                [(a/new-column (temprid 0) "The Good")
+                 (a/new-column (temprid 1) "The Bad")
+                 (a/new-column (temprid 2) "The Unknown")]))
 
 (defn apply-actions [actions initial-state]
   (reduce (fn [state action]
-            ((apply-action action) state))
+            ((a/apply-action action) state))
           initial-state actions))
 
 
@@ -91,7 +78,7 @@
     (render-state [this {:keys [header]}]
       (letfn [(create-column []
                 (when (seq header)
-                  (new-column (om/value connection) (temprid) header)
+                  (a/new-column (om/value connection) (temprid) header)
                   (om/set-state! owner :header "")))]
         (dom/div #js {:id "create-column"}
                  (dom/input #js {:id "new-column" :name "new-column"
@@ -125,7 +112,7 @@
             end-delete-column (fn []
                              (om/set-state! owner :deleting-column false))
             delete-column (fn []
-                            (delete-column (om/value connection) column-id)
+                            (a/delete-column (om/value connection) column-id)
                             (end-delete-column))]
         (dom/div nil
                  (dom/div #js {:onClick begin-delete-column
@@ -159,7 +146,7 @@
       (let [{:keys [connection column-id]} app
             create-note (fn []
                           (when (seq text)
-                            (new-note (om/value connection) (temprid) column-id text)
+                            (a/new-note (om/value connection) (temprid) column-id text)
                             (om/set-state! owner :text "")))]
         (dom/div #js {:className "new-note-wrapper"}
                  (dom/textarea #js {:className "new-note" :name "new-note"
@@ -184,7 +171,7 @@
     (render [_]
       (let [{:keys [connection column-id note-id]} app
             delete-note (fn []
-                          (delete-note (om/value connection) column-id note-id))]
+                          (a/delete-note (om/value connection) column-id note-id))]
         (dom/div #js {:onClick delete-note
                          :className "delete-note"}
                     "✖")))))
@@ -195,7 +182,7 @@
     (render [_]
       (let [{:keys [connection column-id note-id]} app
             create-vote (fn []
-                          (new-vote (om/value connection) (temprid) column-id note-id))]
+                          (a/new-vote (om/value connection) (temprid) column-id note-id))]
         (dom/div #js {:onClick create-vote
                          :className "vote"}
                     "✚")))))
@@ -276,7 +263,7 @@
                  (dom/div #js {:className "note"}
                           (om/build editable note
                                     {:opts {:edit-key :text
-                                            :on-edit (partial edit-note connection id column-id)}}))
+                                            :on-edit (partial a/edit-note connection id column-id)}}))
                  (dom/div #js {:className "vote-delete-row"}
                           (om/build create-vote-button {:connection connection
                                                         :column-id column-id
