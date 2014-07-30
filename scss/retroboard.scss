@@ -302,6 +302,8 @@ body { margin: 0; }
       &:nth-child(10n+10) { @include color-swap($color9); }
 
       .delete-column {
+        cursor: pointer;
+        @include unselectable-text;
         @include condensed-text;
         @include transitions;
         background: $grey;
@@ -319,11 +321,12 @@ body { margin: 0; }
         -webkit-justify-content: space-between;
         justify-content: space-between;
 
-        margin-top: 1em;
         padding: 5px;
         text-align: center;
 
         span, .confirm-delete, .cancel-delete {
+          cursor: pointer;
+          @include unselectable-text;
           @include condensed-text;
           @include transitions;
           margin: 0 5px;
