@@ -248,12 +248,7 @@
                                     nil)
                       :onBlur (fn [e]
                                 (when (om/get-state owner :editing)
-                                  (end-edit text owner on-edit)))})
-                (dom/div
-                 #js {:className "edit-note-button"
-                      :style (display (not editing))
-                      :onClick #(om/set-state! owner :editing true)}
-                 "Edit"))))))
+                                  (end-edit text owner on-edit)))}))))))
 
 (defn note-view [app owner]
   (reify
