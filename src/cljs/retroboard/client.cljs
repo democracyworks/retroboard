@@ -112,9 +112,9 @@
     (render-state [this {:keys [deleting-column]}]
       (let [{:keys [connection column-id]} app
             begin-delete-column (fn []
-                             (om/set-state! owner :deleting-column true))
+                                  (om/set-state! owner :deleting-column true))
             end-delete-column (fn []
-                             (om/set-state! owner :deleting-column false))
+                                (om/set-state! owner :deleting-column false))
             delete-column (fn []
                             (a/delete-column (om/value connection) column-id)
                             (end-delete-column))]
@@ -177,8 +177,8 @@
             delete-note (fn []
                           (a/delete-note (om/value connection) column-id note-id))]
         (dom/div #js {:onClick delete-note
-                         :className "delete-note"}
-                    "✖")))))
+                      :className "delete-note"}
+                 "✖")))))
 
 (defn create-vote-button [app owner]
   (reify
@@ -188,8 +188,8 @@
             create-vote (fn []
                           (a/new-vote (om/value connection) (temprid) column-id note-id))]
         (dom/div #js {:onClick create-vote
-                         :className "vote"}
-                    "✚")))))
+                      :className "vote"}
+                 "✚")))))
 
 (defn change-env [env-id]
   (set! (.-pathname js/location) (str "e/" env-id)))
@@ -220,7 +220,7 @@
     (set! (.-value textarea) "")
     (set! (.-value textarea) val)))
 
-(defn editable [data owner {:keys [edit-key on-edit] :as opts}]
+(defn editable [data owner {:keys [edit-key on-edit element] :as opts}]
   (reify
     om/IInitState
     (init-state [_]
@@ -235,27 +235,28 @@
     (render-state [this {:keys [editing edit-text]}]
       (let [text (get data edit-key)
             reset #(om/set-state! owner {:editing false
-                                         :edit-text text})]
+                                         :edit-text text})
+            element (or element dom/p)]
         (dom/div #js {:className "note-content"}
-                (dom/p #js {:style (display (not editing))
-                            :onClick (fn [el] (om/set-state! owner :editing true))}
+                 (element #js {:style (display (not editing))
+                               :onClick (fn [el] (om/set-state! owner :editing true))}
                           text)
-                (dom/textarea
-                 #js {:className "edit-content-input"
-                      :style (display editing)
-                      :value edit-text
-                      :ref "input"
-                      :onChange #(om/set-state! owner :edit-text (.. % -target -value))
-                      :onKeyDown (fn [e]
-                                   (case (.-keyCode e)
-                                     13 (do (handle-change e data edit-key)
-                                            (end-edit edit-text owner on-edit)
-                                            (.preventDefault e))
-                                     27 (reset)
-                                     nil))
-                      :onBlur (fn [e]
-                                (when (om/get-state owner :editing)
-                                  (reset)))}))))))
+                 (dom/textarea
+                  #js {:className "edit-content-input"
+                       :style (display editing)
+                       :value edit-text
+                       :ref "input"
+                       :onChange #(om/set-state! owner :edit-text (.. % -target -value))
+                       :onKeyDown (fn [e]
+                                    (case (.-keyCode e)
+                                      13 (do (handle-change e data edit-key)
+                                             (end-edit edit-text owner on-edit)
+                                             (.preventDefault e))
+                                      27 (reset)
+                                      nil))
+                       :onBlur (fn [e]
+                                 (when (om/get-state owner :editing)
+                                   (reset)))}))))))
 
 (defn note-view [app owner]
   (reify
@@ -285,7 +286,10 @@
       (let [{:keys [connection column]} app
             [id column] column]
         (dom/div #js {:className "column"}
-                 (dom/h1 nil (:header column))
+                 (om/build editable column
+                           {:opts {:edit-key :header
+                                   :on-edit (partial a/edit-column-header connection id)
+                                   :element dom/h1}})
                  (om/build create-note-button {:connection connection
                                                :column-id id})
                  (apply dom/div #js {:className "notes"}
