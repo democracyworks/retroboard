@@ -1,10 +1,10 @@
-(ns retroboards.templates
+(ns retroboard.templates
   (:require [retroboard.actions :as a]
             [retroboard.resource :refer [temprid]]))
 
 (def rid temprid)
 
-(def retrospective
+(def retro
   [(a/new-column (rid 0) "The Good")
    (a/new-column (rid 1) "The Bad")
    (a/new-column (rid 2) "The Unknown")

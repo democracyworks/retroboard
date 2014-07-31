@@ -71,8 +71,13 @@
 
 (defmethod cmd-handler :new-environment [data channel]
   (println "New environment")
-  (let [rid (env-resource-factory)]
-    (swap! environments assoc rid (new-environment))
+  (let [rid (env-resource-factory)
+        new-env (new-environment)]
+    (swap! environments assoc rid new-env)
+    (when-let [actions (:initial-actions data)]
+      (swap! (:history new-env) concat
+             (resource/replace-ids (:resource-factory new-env)
+                                   actions)))
     (send! channel (pr-str {:cmd :environment-id :environment-id rid}))))
 
 (defn handler [request]

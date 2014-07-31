@@ -2,6 +2,7 @@
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [retroboard.actions :as a]
+            [retroboard.templates :as ts]
             [retroboard.config :as config]
             [retroboard.resource :refer [temprid]]
             [cljs.core.async :refer [chan <! put! pub sub unsub]]
@@ -31,16 +32,19 @@
     (.open ws config/ws-url)
     {:to-send to-send :incoming (pub incoming :cmd) :websocket ws}))
 
-(defn new-environment [{:keys [to-send incoming]}]
-  (let [env-chan (chan)
-        return-chan (chan)]
-    (sub incoming :environment-id env-chan)
-    (go
-     (let [env-id (:environment-id (<! env-chan))]
-       (unsub incoming :environment-id env-chan)
-       (>! return-chan env-id)))
-    (put! to-send {:cmd :new-environment})
-    return-chan))
+(defn new-environment
+  ([conn]
+     (new-environment conn nil))
+  ([{:keys [to-send incoming]} initial-actions]
+     (let [env-chan (chan)
+           return-chan (chan)]
+       (sub incoming :environment-id env-chan)
+       (go
+        (let [env-id (:environment-id (<! env-chan))]
+          (unsub incoming :environment-id env-chan)
+          (>! return-chan env-id)))
+       (put! to-send {:cmd :new-environment :initial-actions initial-actions})
+       return-chan)))
 
 
 (defn send-actions [conn actions]
@@ -190,18 +194,18 @@
 (defn change-env [env-id]
   (set! (.-pathname js/location) (str "e/" env-id)))
 
-(defn create-environment-button [app owner]
-  (reify
-    om/IRender
-    (render [_]
-      (let [{:keys [connection]} app
-            create-env (fn []
-                         (go
-                          (let [env-id (<! (new-environment @connection))]
-                            (change-env env-id))))]
-        (dom/button #js {:onClick create-env
-                         :className "new-environment"}
-                    "New Environment")))))
+
+(defn create-board-button
+  ([connection title]
+     (create-board-button connection title nil))
+  ([connection title template]
+     (let [create-env (fn []
+                        (go
+                         (let [env-id (<! (new-environment connection template))]
+                           (change-env env-id))))]
+       (dom/button #js {:onClick create-env
+                        :className "new-environment"}
+                   title))))
 
 (defn handle-change [e data edit-key]
   (om/transact! data edit-key (fn [_] (.. e -target -value))))
@@ -337,7 +341,9 @@
                                                                    :column col}))
                                           (sort-by first columns)))))
                    (dom/div nil
-                            (om/build create-environment-button app))))))))
+                            (create-board-button connection "Empty Board")
+                            (create-board-button connection "Retro" ts/retro)
+                            (create-board-button connection "Pros/Cons" ts/pros-and-cons))))))))
 
 (def app-state (atom {:state {} :connection (web-socket)}))
 
