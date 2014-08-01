@@ -1,3 +1,3 @@
 (ns retroboard.config)
 
-(def ws-url "ws://arcane-bastion-5301.herokuapp.com/ws")
+(def ws-url "ws://retroboard.herokuapp.com/ws")
