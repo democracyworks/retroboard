@@ -4,7 +4,7 @@
             [retroboard.resource :as resource]
             [clojure.edn :as edn]))
 
-(def redis-uri (or (System/getenv "REDISTOGO_URL") "redis://127.0.0.1:6379"))
+(def redis-uri (or (System/getenv "REDISCLOUD_URL") "redis://127.0.0.1:6379"))
 
 (def server1-conn {:pool {} :spec {:uri redis-uri}})
 (defmacro wcar* [& body] `(car/wcar server1-conn ~@body))
