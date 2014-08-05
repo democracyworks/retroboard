@@ -7,11 +7,11 @@
             [retroboard.templates :as ts]
             [retroboard.util :refer [display]]
             [retroboard.resource :refer [temprid]]
-            [cljs.core.async :refer [chan <! put! pub sub unsub]]
+            [cljs.core.async :refer [chan <! put! pub sub unsub] :as async]
             [goog.events :as events]
             [cljs.reader :as reader]
             [clojure.string :refer [split]])
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop alt!]])
   (:import goog.net.WebSocket
            goog.net.WebSocket.EventType))
 
@@ -202,6 +202,130 @@
     (set! (.-value textarea) "")
     (set! (.-value textarea) val)))
 
+;;;DRAGGING
+(def mouse-move-ch
+  (chan (async/sliding-buffer 1)))
+
+(def mouse-down-ch
+  (chan (async/sliding-buffer 1)))
+
+(def mouse-up-ch
+  (chan (async/sliding-buffer 1)))
+
+(def mouse-move-mult
+  (async/mult mouse-move-ch))
+
+(def mouse-down-mult
+  (async/mult mouse-down-ch))
+
+(def mouse-up-mult
+  (async/mult mouse-up-ch))
+
+
+(js/window.addEventListener "mousedown" #(put! mouse-down-ch %))
+(js/window.addEventListener "mouseup"   #(put! mouse-up-ch   %))
+(js/window.addEventListener "mousemove" #(put! mouse-move-ch %))
+
+(defprotocol IDragStart
+  (drag-start [this event]))
+
+(defprotocol IDragMove
+  (drag-move [this event]))
+
+(defprotocol IDragEnd
+  (drag-end [this event]))
+
+(defn -drag-start [owner event]
+  (let [node (om/get-node owner)
+        rel-x (- (.-pageX event) (.-offsetLeft node))
+        rel-y (- (.-pageY event) (.-offsetTop node))
+        node (om/get-node owner)
+        move (async/tap mouse-move-mult (chan (async/sliding-buffer 5)))
+        up (async/tap mouse-up-mult (chan))
+        dragger (om/get-state owner :dragger)]
+    (go (while true
+          (alt!
+           move ([ev] (drag-move dragger ev))
+           up ([ev] (drag-end dragger ev)))))
+    (set! (.-width (.-style node)) (.-clientWidth node))
+    (om/set-state! owner :move-ch move)
+    (om/set-state! owner :up-ch up)
+    (om/set-state! owner :state :mousedown)
+    (om/set-state! owner :rel-x rel-x)
+    (om/set-state! owner :rel-y rel-y)))
+
+
+(defn -drag-end [owner event]
+  (let [node (om/get-node owner)
+        move (om/get-state owner :move-ch)
+        up (om/get-state owner :up-ch)]
+    (set! (.-width (.-style node)) nil)
+    (async/untap mouse-move-mult move)
+    (async/untap mouse-up-mult up)
+    (om/set-state! owner :state nil)))
+
+(defn free-drag [owner]
+  (reify
+    IDragStart
+    (drag-start [_ event]
+      (-drag-start owner event))
+    IDragMove
+    (drag-move [_ event]
+      (case (om/get-state owner :state)
+        :mousedown
+        (om/set-state! owner :state :dragging)
+        :dragging
+        (let [rel-y (om/get-state owner :rel-y)
+              rel-x (om/get-state owner :rel-x)
+              new-y (- (.. event -pageY) rel-y)
+              new-x (- (.. event -pageX) rel-x)
+              node (om/get-node owner)
+              style (.-style node)]
+          (set! (.-left style) new-x)
+          (set! (.-top style) new-y)
+          (om/set-state! owner :ver-value new-x)
+          (om/set-state! owner :hor-value new-y))
+        nil))
+    IDragEnd
+    (drag-end [_ event]
+      (-drag-end owner event)
+      (let [rel-y (om/get-state owner :rel-y)
+            rel-x (om/get-state owner :rel-x)]
+        (om/set-state! owner :ver-value (- (.. event -pageY) rel-y))
+        (om/set-state! owner :hor-value (- (.. event -pageX) rel-x))))))
+
+(defn draggable [{:keys [comp-fn state] :as data} owner opts]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:hor-value 0
+       :ver-value 0
+       :dragger (free-drag owner)})
+    om/IWillMount
+    (will-mount [_])
+    om/IDidMount
+    (did-mount [_]
+      (let [comp (om/get-node owner)
+            dragger (om/get-state owner :dragger)]
+        (set! (.-onmousedown comp) (fn [ev]
+                                     (.preventDefault ev)
+                                     (drag-start dragger ev)))
+        (set! (.-onmouseup comp) (fn [ev]
+                                   (drag-end dragger ev)))))
+    om/IRenderState
+    (render-state [this s]
+      (let [is-dragging (= (:state s) :dragging)]
+        (dom/div #js {:className (str "draggable" (if is-dragging " dragging"))
+                      :style
+                      (clj->js (if is-dragging
+                                 {:left (om/get-state owner :ver-value)
+                                  :top  (om/get-state owner :hor-value)
+                                  :position "absolute"}
+                                 {}))}
+                 (om/build comp-fn state {:opts opts}))))))
+
+;;;DRAGGING
+
 (defn begin-edit [owner]
   (set! (.-height (.-style (om/get-node owner "input")))
         (+ 15 (.-clientHeight (om/get-node owner "text"))))
@@ -284,9 +408,10 @@
                  (om/build create-note-button {:connection connection
                                                :column-id id})
                  (apply dom/div #js {:className "notes"}
-                        (map (fn [note] (om/build note-view {:connection connection
-                                                            :column-id id
-                                                            :note note}))
+                        (map (fn [note] (om/build draggable {:comp-fn note-view
+                                                            :state {:connection connection
+                                                                    :column-id id
+                                                                    :note note}}))
                              (sort-by first (:notes column))))
                  (om/build delete-column-button {:connection connection
                                                  :column-id id}))))))
@@ -335,8 +460,9 @@
                               (om/build create-column-button (:connection app))
                               (apply dom/div #js {:id "columns"}
                                      (map (fn [col]
-                                            (om/build column-view {:connection connection
-                                                                   :column col}))
+                                            (om/build column-view
+                                                      {:connection connection
+                                                       :column col}))
                                           (sort-by first columns)))))
                    (dom/div nil
                             (create-board-button "Empty Board")

@@ -222,7 +222,7 @@ body { margin: 0; }
         -webkit-justify-content: space-between;
         justify-content: space-between;
 
-        .note { width: 100%; }
+        div.note { width: 100%; }
 
         .note-wrapper {
           @include flex-box-row;
@@ -230,8 +230,6 @@ body { margin: 0; }
           margin: 0 2% 10px 0;
           &:nth-child(2n) { margin: 0 0 10px 2%; }
           &:nth-child(odd):last-child { margin: 0 0 10px 0; }
-
-          width: 46%;
 
           white-space: pre-wrap;      /* CSS3 */
           white-space: -moz-pre-wrap; /* Firefox */
@@ -366,4 +364,13 @@ body { margin: 0; }
   input {
     display: block;
   }
+}
+
+//THIS IS GROSS
+.draggable {
+  width: 46%;
+}
+
+.dragging {
+  z-index: 100;
 }
