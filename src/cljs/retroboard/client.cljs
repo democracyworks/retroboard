@@ -221,6 +221,15 @@
 (def mouse-up-mult
   (async/mult mouse-up-ch))
 
+(defn on-node? [node x y]
+  (let [rect (.getBoundingClientRect node)]
+    (and (< (.-left rect) x (+ (.-left rect) (.-width rect)))
+         (< (.-top rect) y (+ (.-top rect) (.-height rect))))))
+;this is stupid. use hit boxes
+(defn targeted-node [droppable-nodes x y]
+  (if-let [drop-node (first (filter #(on-node? % x y) (keys droppable-nodes)))]
+    (droppable-nodes drop-node)))
+
 
 (js/window.addEventListener "mousedown" #(put! mouse-down-ch %))
 (js/window.addEventListener "mouseup"   #(put! mouse-up-ch   %))
@@ -264,7 +273,14 @@
     (async/untap mouse-up-mult up)
     (om/set-state! owner :state nil)))
 
-(defn free-drag [owner]
+(defn perform-drop [connection [drag-type drag-data] [drop-type drop-data]]
+  (case [drag-type drop-type]
+    [:note :column]
+    (when (not= (:column-id drag-data) drop-data)
+      (println "DO IT!")
+      (a/move-note connection (:note drag-data) (:column-id drag-data) drop-data))))
+
+(defn free-drag [owner connection drag-data droppable-nodes]
   (reify
     IDragStart
     (drag-start [_ event]
@@ -289,18 +305,16 @@
     IDragEnd
     (drag-end [_ event]
       (-drag-end owner event)
-      (let [rel-y (om/get-state owner :rel-y)
-            rel-x (om/get-state owner :rel-x)]
-        (om/set-state! owner :ver-value (- (.. event -pageY) rel-y))
-        (om/set-state! owner :hor-value (- (.. event -pageX) rel-x))))))
+      (when-let [drop-data (targeted-node @droppable-nodes (.-pageX event) (.-pageY event))]
+        (perform-drop connection drag-data drop-data)))))
 
-(defn draggable [{:keys [comp-fn state] :as data} owner opts]
+(defn draggable [{:keys [connection comp-fn state drag-data droppable-nodes] :as data} owner opts]
   (reify
     om/IInitState
     (init-state [_]
       {:hor-value 0
        :ver-value 0
-       :dragger (free-drag owner)})
+       :dragger (free-drag owner connection drag-data droppable-nodes)})
     om/IWillMount
     (will-mount [_])
     om/IDidMount
@@ -323,6 +337,18 @@
                                   :position "absolute"}
                                  {}))}
                  (om/build comp-fn state {:opts opts}))))))
+
+(defn droppable [{:keys [droppable-nodes comp-fn state]} owner {:keys [drop-data] :as opts}]
+  (reify
+    om/IDidMount
+    (did-mount [_]
+      (om/transact! droppable-nodes #(assoc % (om/get-node owner) drop-data)))
+    om/IWillUnmount
+    (will-unmount [_]
+      (om/transact! droppable-nodes #(dissoc % (om/get-node owner))))
+    om/IRender
+    (render [_]
+      (om/build comp-fn state {:opts opts}))))
 
 ;;;DRAGGING
 
@@ -408,10 +434,13 @@
                  (om/build create-note-button {:connection connection
                                                :column-id id})
                  (apply dom/div #js {:className "notes"}
-                        (map (fn [note] (om/build draggable {:comp-fn note-view
+                        (map (fn [note] (om/build draggable {:connection connection
+                                                            :comp-fn note-view
+                                                            :droppable-nodes (:droppable-nodes app)
                                                             :state {:connection connection
                                                                     :column-id id
-                                                                    :note note}}))
+                                                                    :note note}
+                                                            :drag-data [:note {:column-id id :note (first note)}]}))
                              (sort-by first (:notes column))))
                  (om/build delete-column-button {:connection connection
                                                  :column-id id}))))))
@@ -460,9 +489,13 @@
                               (om/build create-column-button (:connection app))
                               (apply dom/div #js {:id "columns"}
                                      (map (fn [col]
-                                            (om/build column-view
-                                                      {:connection connection
-                                                       :column col}))
+                                            (om/build droppable
+                                                      {:comp-fn column-view
+                                                       :droppable-nodes (:droppable-nodes app)
+                                                       :state {:connection connection
+                                                               :column col
+                                                               :droppable-nodes (:droppable-nodes app)}}
+                                                      {:opts {:drop-data [:column (first col)]}}))
                                           (sort-by first columns)))))
                    (dom/div nil
                             (create-board-button "Empty Board")
@@ -470,7 +503,8 @@
                             (create-board-button "Pros/Cons" ts/pros-and-cons)
                             (om/build user/profile-view app))))))))
 
-(def app-state (atom {:state {} :connection (web-socket)}))
+(def app-state (atom {:state {} :connection (web-socket)
+                      :droppable-nodes {}}))
 
 (defn get-env-id []
   (let [pathname (.-pathname js/location)
