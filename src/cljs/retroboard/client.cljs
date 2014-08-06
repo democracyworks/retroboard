@@ -225,11 +225,10 @@
   (let [rect (.getBoundingClientRect node)]
     (and (< (.-left rect) x (+ (.-left rect) (.-width rect)))
          (< (.-top rect) y (+ (.-top rect) (.-height rect))))))
-;this is stupid. use hit boxes
+
 (defn targeted-node [droppable-nodes x y]
   (if-let [drop-node (first (filter #(on-node? % x y) (keys droppable-nodes)))]
     (droppable-nodes drop-node)))
-
 
 (js/window.addEventListener "mousedown" #(put! mouse-down-ch %))
 (js/window.addEventListener "mouseup"   #(put! mouse-up-ch   %))
@@ -273,40 +272,37 @@
     (async/untap mouse-up-mult up)
     (om/set-state! owner :state nil)))
 
-(defn perform-drop [connection [drag-type drag-data] [drop-type drop-data]]
-  (case [drag-type drop-type]
-    [:note :column]
-    (when (not= (:column-id drag-data) drop-data)
-      (println "DO IT!")
-      (a/move-note connection (:note drag-data) (:column-id drag-data) drop-data))))
-
-(defn free-drag [owner connection drag-data droppable-nodes]
+(defn free-drag [owner drop-fn droppable-nodes]
   (reify
     IDragStart
     (drag-start [_ event]
       (-drag-start owner event))
     IDragMove
     (drag-move [_ event]
-      (case (om/get-state owner :state)
-        :mousedown
-        (om/set-state! owner :state :dragging)
-        :dragging
-        (let [rel-y (om/get-state owner :rel-y)
-              rel-x (om/get-state owner :rel-x)
-              new-y (- (.. event -pageY) rel-y)
-              new-x (- (.. event -pageX) rel-x)
-              node (om/get-node owner)
-              style (.-style node)]
-          (set! (.-left style) new-x)
-          (set! (.-top style) new-y)
-          (om/set-state! owner :ver-value new-x)
-          (om/set-state! owner :hor-value new-y))
-        nil))
+      (let [rel-y (om/get-state owner :rel-y)
+            rel-x (om/get-state owner :rel-x)
+            new-y (- (.. event -pageY) rel-y)
+            new-x (- (.. event -pageX) rel-x)
+            node (om/get-node owner)
+            style (.-style node)]
+        (set! (.-left style) new-x)
+        (set! (.-top style) new-y)
+        (om/set-state! owner :ver-value new-x)
+        (om/set-state! owner :hor-value new-y))
+      (if (= :mousedown (om/get-state owner :state))
+        (om/set-state! owner :state :dragging)))
     IDragEnd
     (drag-end [_ event]
       (-drag-end owner event)
-      (when-let [drop-data (targeted-node @droppable-nodes (.-pageX event) (.-pageY event))]
-        (perform-drop connection drag-data drop-data)))))
+      (if-let [drop-data (targeted-node @droppable-nodes (.-pageX event) (.-pageY event))]
+        (drop-fn drop-data)))))
+
+
+(defn perform-drop [connection [drag-type drag-data] [drop-type drop-data]]
+  (case [drag-type drop-type]
+    [:note :column]
+    (if (not= (:column-id drag-data) drop-data)
+      (a/move-note connection (:note drag-data) (:column-id drag-data) drop-data))))
 
 (defn draggable [{:keys [connection comp-fn state drag-data droppable-nodes] :as data} owner opts]
   (reify
@@ -314,7 +310,7 @@
     (init-state [_]
       {:hor-value 0
        :ver-value 0
-       :dragger (free-drag owner connection drag-data droppable-nodes)})
+       :dragger (free-drag owner (partial perform-drop connection drag-data) droppable-nodes)})
     om/IWillMount
     (will-mount [_])
     om/IDidMount
@@ -440,7 +436,8 @@
                                                             :state {:connection connection
                                                                     :column-id id
                                                                     :note note}
-                                                            :drag-data [:note {:column-id id :note (first note)}]}))
+                                                            :drag-data [:note {:column-id id :note (first note)}]}
+                                                 {:key :drag-data}))
                              (sort-by first (:notes column))))
                  (om/build delete-column-button {:connection connection
                                                  :column-id id}))))))
@@ -452,7 +449,6 @@
              (let [error (:error (<! error-chan))]
                (case error
                  :no-such-environment (om/update! app :connected :no-such-environment))))))
-
 (defn view [app owner]
   (reify
     om/IInitState
