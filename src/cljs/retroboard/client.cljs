@@ -304,13 +304,13 @@
     (if (not= (:column-id drag-data) drop-data)
       (a/move-note connection (:note drag-data) (:column-id drag-data) drop-data))))
 
-(defn draggable [{:keys [connection comp-fn state drag-data droppable-nodes] :as data} owner opts]
+(defn draggable [{:keys [drop-fn comp-fn state drag-data droppable-nodes] :as data} owner opts]
   (reify
     om/IInitState
     (init-state [_]
       {:hor-value 0
        :ver-value 0
-       :dragger (free-drag owner (partial perform-drop connection drag-data) droppable-nodes)})
+       :dragger (free-drag owner (partial drop-fn drag-data) droppable-nodes)})
     om/IWillMount
     (will-mount [_])
     om/IDidMount
@@ -334,7 +334,7 @@
                                  {}))}
                  (om/build comp-fn state {:opts opts}))))))
 
-(defn droppable [{:keys [droppable-nodes comp-fn state]} owner {:keys [drop-data] :as opts}]
+(defn droppable [{:keys [droppable-nodes comp-fn state drop-data]} owner {:keys [] :as opts}]
   (reify
     om/IDidMount
     (did-mount [_]
@@ -430,14 +430,14 @@
                  (om/build create-note-button {:connection connection
                                                :column-id id})
                  (apply dom/div #js {:className "notes"}
-                        (map (fn [note] (om/build draggable {:connection connection
-                                                            :comp-fn note-view
-                                                            :droppable-nodes (:droppable-nodes app)
+                        (map (fn [note] (om/build draggable {:comp-fn note-view
                                                             :state {:connection connection
                                                                     :column-id id
                                                                     :note note}
+                                                            :drop-fn (partial perform-drop connection)
+                                                            :droppable-nodes (:droppable-nodes app)
                                                             :drag-data [:note {:column-id id :note (first note)}]}
-                                                 {:key :drag-data}))
+                                                 {:react-key (first note)}))
                              (sort-by first (:notes column))))
                  (om/build delete-column-button {:connection connection
                                                  :column-id id}))))))
@@ -490,8 +490,9 @@
                                                        :droppable-nodes (:droppable-nodes app)
                                                        :state {:connection connection
                                                                :column col
-                                                               :droppable-nodes (:droppable-nodes app)}}
-                                                      {:opts {:drop-data [:column (first col)]}}))
+                                                               :droppable-nodes (:droppable-nodes app)}
+                                                       :drop-data [:column (first col)]}
+                                                      {:react-key (first col)}))
                                           (sort-by first columns)))))
                    (dom/div nil
                             (create-board-button "Empty Board")
