@@ -225,7 +225,7 @@
         (+ 15 (.-clientHeight (om/get-node owner "text"))))
   (om/set-state! owner :editing true))
 
-(defn editable [data owner {:keys [edit-key on-edit element] :as opts}]
+(defn editable [data owner {:keys [edit-key on-edit element wrap-class input-type] :as opts}]
   (reify
     om/IInitState
     (init-state [_]
@@ -242,12 +242,12 @@
             reset #(om/set-state! owner {:editing false
                                          :edit-text text})
             element (or element dom/p)]
-        (dom/div #js {:className "note-content"}
+        (dom/div #js {:className wrap-class}
                  (element #js {:style (display (not editing))
                                :ref "text"
                                :onClick #(begin-edit owner)}
                           text)
-                 (dom/textarea
+                 ((or input-type dom/textarea)
                   #js {:className "edit-content-input"
                        :style (display editing)
                        :value edit-text
@@ -274,6 +274,7 @@
                  (dom/div #js {:className "note"}
                           (om/build editable note
                                     {:opts {:edit-key :text
+                                            :wrap-class "note-content"
                                             :on-edit (partial a/edit-note connection id column-id)}}))
                  (dom/div #js {:className "vote-delete-row"}
                           (om/build create-vote-button {:connection connection
@@ -294,6 +295,8 @@
         (dom/div #js {:className "column"}
                  (om/build editable column
                            {:opts {:edit-key :header
+                                   :wrap-class "column-header"
+                                   :input-type dom/input
                                    :on-edit (partial a/edit-column-header connection id)
                                    :element dom/h1}})
                  (om/build create-note-button {:connection connection

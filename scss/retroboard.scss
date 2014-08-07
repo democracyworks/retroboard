@@ -102,7 +102,21 @@ body { margin: 0; }
   }
 
   @mixin color-swap($color) {
-    h1 { border-bottom: 3px solid $color; }
+    .column-header {
+      border-bottom: 3px solid $color;
+      margin-bottom: 20px;
+
+      h1 {
+        min-height: 43px;
+      }
+
+      input {
+        @include condensed-text;
+        font-size: 32px;
+        width: 100%;
+      }
+    }
+
 
     .note-wrapper {
       @include animation(0, 0.7s, animationFrames);
@@ -174,6 +188,7 @@ body { margin: 0; }
       h1 {
         @include condensed-text;
         margin-top: 0.25em;
+        margin-bottom: 0;
       }
 
       .new-note-wrapper {
