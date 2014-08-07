@@ -220,6 +220,11 @@
     (set! (.-value textarea) "")
     (set! (.-value textarea) val)))
 
+(defn begin-edit [owner]
+  (set! (.-height (.-style (om/get-node owner "input")))
+        (+ 15 (.-clientHeight (om/get-node owner "text"))))
+  (om/set-state! owner :editing true))
+
 (defn editable [data owner {:keys [edit-key on-edit element] :as opts}]
   (reify
     om/IInitState
@@ -239,7 +244,8 @@
             element (or element dom/p)]
         (dom/div #js {:className "note-content"}
                  (element #js {:style (display (not editing))
-                               :onClick (fn [el] (om/set-state! owner :editing true))}
+                               :ref "text"
+                               :onClick #(begin-edit owner)}
                           text)
                  (dom/textarea
                   #js {:className "edit-content-input"
