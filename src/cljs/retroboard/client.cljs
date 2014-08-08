@@ -1,6 +1,7 @@
 (ns retroboard.client
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [retroboard.user :as user]
             [retroboard.actions :as a]
             [retroboard.templates :as ts]
             [retroboard.config :as config]
@@ -356,7 +357,8 @@
                    (dom/div nil
                             (create-board-button connection "Empty Board")
                             (create-board-button connection "Retro" ts/retro)
-                            (create-board-button connection "Pros/Cons" ts/pros-and-cons))))))))
+                            (create-board-button connection "Pros/Cons" ts/pros-and-cons)
+                            (om/build user/profile-view app))))))))
 
 (def app-state (atom {:state {} :connection (web-socket)}))
 
