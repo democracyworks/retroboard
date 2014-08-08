@@ -116,6 +116,6 @@
         handler (if (= port 8080)
                   (reload/wrap-reload web-handler)
                   web-handler)]
-    (run-server handler {:port 8080})
+    (run-server handler {:port port})
     (ping-clients)
     (println "Running on " port)))
