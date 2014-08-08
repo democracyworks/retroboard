@@ -1,5 +1,6 @@
 (ns retroboard.user
   (:require [retroboard.xhr :as xhr]
+            [retroboard.util :refer [display]]
             [cljs.core.async :refer [<! chan]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -8,17 +9,30 @@
 (enable-console-print!)
 
 (defn do-login
-  ([username password]
+  ([email password]
      (let [ch (chan)]
-       (do-login username password ch)
+       (do-login email password ch)
        ch))
-  ([username password ch]
+  ([email password ch]
      (xhr/edn-xhr
       {:method :post
        :url "http://localhost:8080/login"
-       :data {:username username
+       :data {:username email
               :password password}
        :chan ch})))
+
+(defn signup
+  ([email password name]
+     (let [ch (chan)]
+       (signup email password name ch)
+       ch))
+  ([email password name ch]
+     (xhr/edn-xhr
+      {:method :post
+       :url "http://localhost:8080/signup"
+       :data {:email email
+              :password password
+              :name name}})))
 
 (defn fetch-boards
   ([]
@@ -31,11 +45,20 @@
        :url "http://localhost:8080/boards"
        :chan ch})))
 
+(defn input [owner id placeholder & type]
+  (dom/input #js {:type (or (first type) "text")
+                  :id (name id)
+                  :onChange (fn [e]
+                              (om/set-state! owner id
+                                             (.. e -target -value)))
+                  :placeholder placeholder}))
+
 (defn login-view [app owner {:keys [on-login]}]
   (reify
     om/IInitState
     (init-state [_]
-      {:ch (chan)})
+      {:screen :login
+       :ch (chan)})
     om/IWillMount
     (will-mount [_]
       (let [ch (om/get-state owner :ch)]
@@ -44,27 +67,39 @@
                 (if (= 200 status)
                   (on-login)))))))
     om/IRenderState
-    (render-state [_ {:keys [ch]}]
-      (dom/form #js {:id "login"}
-                (dom/div nil
-                         (dom/label #js {:htmlFor "username"}
-                                    "Email")
-                         (dom/input #js {:type "text"
-                                         :id "username"
-                                         :ref "username"}))
-                (dom/div nil
-                         (dom/label #js {:htmlFor "password"}
-                                    "Password")
-                         (dom/input #js {:type "password"
-                                         :id "password"
-                                         :ref "password"}))
-                (dom/button
-                 #js {:onClick (fn [e]
-                                 (.preventDefault e)
-                                 (do-login (.-value (om/get-node owner "username"))
-                                           (.-value (om/get-node owner "password"))
-                                           ch))}
-                 "Login")))))
+    (render-state [_ {:keys [ch screen email password name]}]
+      (dom/div #js {:id "login-signup"}
+               (dom/form #js {:id "login"
+                              :style (display (= screen :login))}
+                         (input owner :email "Your email")
+                         (input owner :password "Your password" "password")
+                         (dom/button
+                          #js {:onClick (fn [e]
+                                          (.preventDefault e)
+                                          (do-login email
+                                                    password
+                                                    ch))}
+                          "Login")
+                         (dom/a #js {:href "#"
+                                     :onClick (fn [_] (om/set-state! owner :screen :signup))}
+                                "or sign up"))
+               (dom/form #js {:id "signup"
+                              :style (display (= screen :signup))}
+                         (input owner :name "Your name")
+                         (input owner :email "Your email")
+                         (input owner :password "Choose a password" "password")
+                         (dom/button
+                          #js {:onClick (fn [e]
+                                          (.preventDefault e)
+                                          (signup email
+                                                  password
+                                                  name
+                                                  ch))}
+                          "Signup")
+                         (dom/a #js {:href "#"
+                                     :onClick (fn [_] (om/set-state! owner :screen :login))}
+                                "or login"))))))
+
 (defn board-link [board-id]
   (dom/a #js {:href (str "/e/" board-id)}
          board-id))

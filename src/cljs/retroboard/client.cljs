@@ -5,6 +5,7 @@
             [retroboard.actions :as a]
             [retroboard.templates :as ts]
             [retroboard.config :as config]
+            [retroboard.util :refer [display]]
             [retroboard.resource :refer [temprid]]
             [cljs.core.async :refer [chan <! put! pub sub unsub]]
             [goog.events :as events]
@@ -99,11 +100,6 @@
                  (dom/span #js {:onClick create-column
                                 :className "add-column"
                                 :disabled (empty? header)}))))))
-
-(defn display [show]
-  (if show
-    #js {}
-    #js {:display "none"}))
 
 (defn delete-column-button [app owner]
   (reify

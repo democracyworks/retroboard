@@ -8,7 +8,7 @@
             [ring.middleware.edn :refer [wrap-edn-params]]
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.middleware.file-info :refer [wrap-file-info]]
-            [compojure.core :refer [defroutes GET ANY]]
+            [compojure.core :refer [defroutes GET ANY POST]]
             [compojure.handler :refer [site]]
             [cemerick.friend :as friend]
             [cemerick.friend.workflows :as workflows]))
@@ -74,7 +74,6 @@
                                          channel
                                          identity))))))
 
-
 (defn edn-resp [data & [status]]
   {:status (or status 200)
    :headers {"Content-Type" "application/edn"}
@@ -84,11 +83,16 @@
   (friend/authorize #{::user/user}
                     (edn-resp (user/boards (:current (friend/identity req))))))
 
+(defn signup [req]
+  (println "SIGNUP!")
+  (let [{:keys [email password name]} (:params req)]
+    (user/add-user email password name)))
 
 (defroutes app
   (GET "/" [] (resource-response "public/html/index.html"))
   (GET "/e/:env" [] (resource-response "public/html/index.html"))
   (GET "/boards" [] boards)
+  (POST "/signup" [] signup)
   (GET "/ws" [] handler)
   (friend/logout (ANY "/logout" request (resp/redirect "/"))))
 

@@ -363,6 +363,9 @@ body { margin: 0; }
   }
 }
 
-#login {
+#login-signup {
   margin: 10px;
+  input {
+    display: block;
+  }
 }
