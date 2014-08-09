@@ -16,7 +16,7 @@
     (if is-new eid (recur))))
 
 (defn exists? [eid]
-  (wcar* (car/hmget env-map eid)))
+  (= (wcar* (car/hexists env-map eid)) 1))
 
 (defn resource-generator [eid]
   (let [rid (str eid "." "current-rid")]
