@@ -56,4 +56,5 @@
                                    :optimizations :advanced
                                    :pretty-print false
                                    :preamble ["react/react.min.js"]
-                                   :externs ["react/externs/react.js"]}}}})
+                                   :externs ["react/externs/react.js"
+                                             "externs.js"]}}}})
