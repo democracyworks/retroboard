@@ -16,7 +16,7 @@
   ([email password ch]
      (xhr/edn-xhr
       {:method :post
-       :url "http://localhost:8080/login"
+       :url "/login"
        :data {:username email
               :password password}
        :chan ch})))
@@ -29,7 +29,7 @@
   ([email password name ch]
      (xhr/edn-xhr
       {:method :post
-       :url "http://localhost:8080/signup"
+       :url "/signup"
        :data {:email email
               :password password
               :name name}})))
@@ -42,7 +42,7 @@
   ([ch]
      (xhr/edn-xhr
       {:method :get
-       :url "http://localhost:8080/boards"
+       :url "/boards"
        :chan ch})))
 
 (defn input [owner id placeholder & type]
