@@ -320,14 +320,16 @@
     (init-state [_] {})
     om/IWillMount
     (will-mount [_]
-      (let [action-chan (chan)]
+      (let [action-chan (chan)
+            eid (:id app)]
         (error-handler app)
-        (when (:id app)
+        (when eid
           (put! (get-in (if (om/rendering?) app @app) [:connection :to-send])
-                {:cmd :register :action (:id app)}))
+                {:cmd :register :action eid}))
         (sub (get-in app [:connection :incoming]) :cmds action-chan)
         (go (let [actions (:commands (<! action-chan))]
               (om/update! app :connected :connected)
+              (user/add-board eid)
               (go-loop [actions actions]
                        (om/transact! app :state (partial apply-actions actions))
                        (recur (:commands (<! action-chan))))))))

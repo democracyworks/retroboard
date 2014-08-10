@@ -20,31 +20,30 @@
   (ffirst (filter (fn [[eid channels]] (channels channel)) @subscriptions)))
 
 
-(defmulti cmd-handler (fn [data _ _] (:cmd data)))
-(defmethod cmd-handler :register [data channel identity]
+(defmulti cmd-handler (fn [data _] (:cmd data)))
+(defmethod cmd-handler :register [data channel]
   (println "Registering " channel " to env " (:action data))
   (let [eid (:action data)]
     (if (env/exists? eid)
       (do
-        (if identity (user/add-board (:current identity) eid))
         (swap! subscriptions #(update-in % [eid] (comp set conj) channel))
         (send! channel (pr-str {:cmd :cmds :commands (env/history eid)})))
       (send! channel (pr-str {:cmd :error :error :no-such-environment})))))
 
-(defmethod cmd-handler :unregister [data channel identity]
+(defmethod cmd-handler :unregister [data channel]
   (println "Unregistering " channel)
   (when-let [eid (get-eid channel)]
     (swap! subscriptions #(update-in % [eid] disj channel))))
 
-(defmethod cmd-handler :actions [data channel identity]
+(defmethod cmd-handler :actions [data channel]
   (println "Received " data)
   (when-let [eid (get-eid channel)]
     (let [actions (env/append-actions eid (:actions data))]
       (dorun (map #(send! % (pr-str {:cmd :cmds :commands actions}))
                   (@subscriptions eid))))))
 
-(defmethod cmd-handler :action [data channel identity]
-  (cmd-handler {:cmd :actions :actions [(:action data)]} channel identity))
+(defmethod cmd-handler :action [data channel]
+  (cmd-handler {:cmd :actions :actions [(:action data)]} channel))
 
 (defn all-clients []
   (apply clojure.set/union (vals @subscriptions)))
@@ -58,7 +57,7 @@
             (dorun (map ping (all-clients)))
             (recur))))
 
-(defmethod cmd-handler :new-environment [data channel identity]
+(defmethod cmd-handler :new-environment [data channel]
   (println "New environment: " data)
   (let [new-env-id (env/create)]
     (when-let [actions (:initial-actions data)]
@@ -67,12 +66,10 @@
 
 (defn handler [request]
   (with-channel request channel
-    (let [identity (friend/identity request)]
-      (on-close channel (fn [status] (cmd-handler {:cmd :unregister} channel identity)))
-      (on-receive channel (fn [data]
-                            (cmd-handler (edn/read-string {:readers *data-readers*} data)
-                                         channel
-                                         identity))))))
+    (on-close channel (fn [status] (cmd-handler {:cmd :unregister} channel)))
+    (on-receive channel (fn [data]
+                          (cmd-handler (edn/read-string {:readers *data-readers*} data)
+                                       channel)))))
 
 (defn edn-resp [data & [status]]
   {:status (or status 200)
@@ -82,6 +79,12 @@
 (defn boards [req]
   (friend/authorize #{::user/user}
                     (edn-resp (user/boards (:current (friend/identity req))))))
+
+(defn add-board [req]
+  (let [{:keys [eid]} (:params req)]
+    (friend/authorize #{::user/user}
+                      (user/add-board (:current (friend/identity req)) eid)
+                      (edn-resp "OK"))))
 
 (defn signup [req]
   (let [{:keys [username email password]} (:params req)
@@ -94,6 +97,7 @@
   (GET "/" [] (resource-response "public/html/index.html"))
   (GET "/e/:env" [] (resource-response "public/html/index.html"))
   (GET "/boards" [] boards)
+  (POST "/boards/add" [] add-board)
   (POST "/signup" [] signup)
   (GET "/ws" [] handler)
   (friend/logout (ANY "/logout" request (resp/redirect "/"))))

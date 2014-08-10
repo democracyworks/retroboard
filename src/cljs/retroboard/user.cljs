@@ -35,6 +35,18 @@
               :password password}
        :chan ch})))
 
+(defn add-board
+  ([eid]
+     (let [ch (chan)]
+       (add-board eid ch)
+       ch))
+  ([eid ch]
+     (xhr/edn-xhr
+      {:method :post
+       :url "/boards/add"
+       :data {:eid eid}
+       :chan ch})))
+
 (defn fetch-boards
   ([]
      (let [ch (chan)]
