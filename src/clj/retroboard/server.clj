@@ -84,9 +84,11 @@
                     (edn-resp (user/boards (:current (friend/identity req))))))
 
 (defn signup [req]
-  (println "SIGNUP!")
-  (let [{:keys [email password name]} (:params req)]
-    (user/add-user email password name)))
+  (let [{:keys [username email password]} (:params req)
+        user (user/add-user username email password)]
+    (if user
+      (friend/merge-authentication (edn-resp "Created!" 201) (assoc user :identity username))
+      (edn-resp "Problem" 500))))
 
 (defroutes app
   (GET "/" [] (resource-response "public/html/index.html"))

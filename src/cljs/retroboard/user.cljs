@@ -22,17 +22,18 @@
        :chan ch})))
 
 (defn signup
-  ([email password name]
+  ([username email password]
      (let [ch (chan)]
-       (signup email password name ch)
+       (signup username email password ch)
        ch))
-  ([email password name ch]
+  ([username email password ch]
      (xhr/edn-xhr
       {:method :post
        :url "/signup"
-       :data {:email email
-              :password password
-              :name name}})))
+       :data {:username username
+              :email email
+              :password password}
+       :chan ch})))
 
 (defn fetch-boards
   ([]
@@ -64,10 +65,10 @@
       (let [ch (om/get-state owner :ch)]
         (go (while true
               (let [{:keys [status body]} (<! ch)]
-                (if (= 200 status)
+                (if (<= 200 status 300)
                   (on-login)))))))
     om/IRenderState
-    (render-state [_ {:keys [ch screen email password name]}]
+    (render-state [_ {:keys [ch screen username email password]}]
       (dom/div #js {:id "login-signup"}
                (dom/form #js {:id "login"
                               :style (display (= screen :login))}
@@ -85,15 +86,15 @@
                                 "or sign up"))
                (dom/form #js {:id "signup"
                               :style (display (= screen :signup))}
-                         (input owner :name "Your name")
+                         (input owner :username "Chooe a username")
                          (input owner :email "Your email")
                          (input owner :password "Choose a password" "password")
                          (dom/button
                           #js {:onClick (fn [e]
                                           (.preventDefault e)
-                                          (signup email
+                                          (signup username
+                                                  email
                                                   password
-                                                  name
                                                   ch))}
                           "Signup")
                          (dom/a #js {:href "#"

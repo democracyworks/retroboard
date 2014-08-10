@@ -19,7 +19,8 @@
                  [javax.servlet/servlet-api "2.5"]
                  [com.keminglabs/cljx "0.4.0"]
                  [com.taoensso/carmine "2.6.2"]
-                 [com.cemerick/friend "0.2.1"]]
+                 [com.cemerick/friend "0.2.1"]
+                 [com.novemberain/monger "2.0.0"]]
   :source-paths ["src/clj" "src/cljx"]
   :cljx {:builds [{:source-paths ["src/cljx"]
                    :output-path "target/classes"
