@@ -72,7 +72,7 @@
       (dom/div #js {:id "login-signup"}
                (dom/form #js {:id "login"
                               :style (display (= screen :login))}
-                         (input owner :email "Your email")
+                         (input owner :email "Your username or email")
                          (input owner :password "Your password" "password")
                          (dom/button
                           #js {:onClick (fn [e]
@@ -86,7 +86,7 @@
                                 "or sign up"))
                (dom/form #js {:id "signup"
                               :style (display (= screen :signup))}
-                         (input owner :username "Chooe a username")
+                         (input owner :username "Choose a username")
                          (input owner :email "Your email")
                          (input owner :password "Choose a password" "password")
                          (dom/button
