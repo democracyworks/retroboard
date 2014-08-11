@@ -1,3 +1,3 @@
 (ns retroboard.config)
 
-(def ws-url "ws://retroboard.herokuapp.com/ws")
+(def ws-url "ws://retroboard.herokuapp.com/env/")

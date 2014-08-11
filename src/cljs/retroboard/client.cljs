@@ -1,6 +1,7 @@
 (ns retroboard.client
   (:require [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [retroboard.xhr :as xhr]
             [retroboard.user :as user]
             [retroboard.actions :as a]
             [retroboard.templates :as ts]
@@ -34,37 +35,20 @@
     (.open ws config/ws-url)
     {:to-send to-send :incoming (pub incoming :cmd) :websocket ws}))
 
-(defn new-environment
-  ([conn]
-     (new-environment conn nil))
-  ([{:keys [to-send incoming]} initial-actions]
-     (let [env-chan (chan)
-           return-chan (chan)]
-       (sub incoming :environment-id env-chan)
-       (go
-        (let [env-id (:environment-id (<! env-chan))]
-          (unsub incoming :environment-id env-chan)
-          (>! return-chan env-id)))
-       (put! to-send {:cmd :new-environment :initial-actions initial-actions})
-       return-chan)))
-
-
-(defn send-actions [conn actions]
-  (put! (:to-send conn)
-        {:cmd :actions
-         :actions actions}))
-
-(defn retrospective [conn]
-  (send-actions conn
-                [(a/new-column (temprid 0) "The Good")
-                 (a/new-column (temprid 1) "The Bad")
-                 (a/new-column (temprid 2) "The Unknown")]))
+(defn create-environment
+  ([& [initial-actions]]
+     (let [create-ch (chan)]
+       (xhr/edn-xhr
+        {:method :post
+         :url "/env/"
+         :data {:initial-actions initial-actions}
+         :chan create-ch})
+       (go (:body (<! create-ch))))))
 
 (defn apply-actions [actions initial-state]
   (reduce (fn [state action]
             ((a/apply-action action) state))
           initial-state actions))
-
 
 (defn column-placeholder []
   (str "Add a Column (e.g. "
@@ -193,12 +177,12 @@
 
 
 (defn create-board-button
-  ([connection title]
-     (create-board-button connection title nil))
-  ([connection title template]
+  ([title]
+     (create-board-button title nil))
+  ([title template]
      (let [create-env (fn []
                         (go
-                         (let [env-id (<! (new-environment connection template))]
+                         (let [env-id (<! (create-environment template))]
                            (change-env env-id))))]
        (dom/button #js {:onClick create-env
                         :className "new-environment"}
@@ -353,9 +337,9 @@
                                                                    :column col}))
                                           (sort-by first columns)))))
                    (dom/div nil
-                            (create-board-button connection "Empty Board")
-                            (create-board-button connection "Retro" ts/retro)
-                            (create-board-button connection "Pros/Cons" ts/pros-and-cons)
+                            (create-board-button "Empty Board")
+                            (create-board-button "Retro" ts/retro)
+                            (create-board-button "Pros/Cons" ts/pros-and-cons)
                             (om/build user/profile-view app))))))))
 
 (def app-state (atom {:state {} :connection (web-socket)}))

@@ -1,80 +1,16 @@
 (ns retroboard.server
-  (:require [retroboard.environment :as env]
-            [retroboard.user :as user]
-            [clojure.edn :as edn]
-            [org.httpkit.server :refer :all]
+  (:require [retroboard.user :as user]
+            [retroboard.api.environment :as api.env]
+            [retroboard.util :refer [wrap-edn-params edn-resp]]
+            [org.httpkit.server :refer [run-server]]
             [ring.middleware.reload :as reload]
             [ring.util.response :as resp :refer [resource-response]]
-            [ring.middleware.edn :refer [wrap-edn-params]]
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.middleware.file-info :refer [wrap-file-info]]
-            [compojure.core :refer [defroutes GET ANY POST]]
+            [compojure.core :refer [defroutes context GET ANY POST]]
             [compojure.handler :refer [site]]
             [cemerick.friend :as friend]
             [cemerick.friend.workflows :as workflows]))
-
-
-(def subscriptions (atom {}))
-
-(defn get-eid [channel]
-  (ffirst (filter (fn [[eid channels]] (channels channel)) @subscriptions)))
-
-
-(defmulti cmd-handler (fn [data _] (:cmd data)))
-(defmethod cmd-handler :register [data channel]
-  (println "Registering " channel " to env " (:action data))
-  (let [eid (:action data)]
-    (if (env/exists? eid)
-      (do
-        (swap! subscriptions #(update-in % [eid] (comp set conj) channel))
-        (send! channel (pr-str {:cmd :cmds :commands (env/history eid)})))
-      (send! channel (pr-str {:cmd :error :error :no-such-environment})))))
-
-(defmethod cmd-handler :unregister [data channel]
-  (println "Unregistering " channel)
-  (when-let [eid (get-eid channel)]
-    (swap! subscriptions #(update-in % [eid] disj channel))))
-
-(defmethod cmd-handler :actions [data channel]
-  (println "Received " data)
-  (when-let [eid (get-eid channel)]
-    (let [actions (env/append-actions eid (:actions data))]
-      (dorun (map #(send! % (pr-str {:cmd :cmds :commands actions}))
-                  (@subscriptions eid))))))
-
-(defmethod cmd-handler :action [data channel]
-  (cmd-handler {:cmd :actions :actions [(:action data)]} channel))
-
-(defn all-clients []
-  (apply clojure.set/union (vals @subscriptions)))
-
-(defn ping [channel]
-  (send! channel (pr-str {:ping :pong})))
-
-(defn ping-clients []
-  (future (loop []
-            (Thread/sleep 1000)
-            (dorun (map ping (all-clients)))
-            (recur))))
-
-(defmethod cmd-handler :new-environment [data channel]
-  (println "New environment: " data)
-  (let [new-env-id (env/create)]
-    (when-let [actions (:initial-actions data)]
-      (env/append-actions new-env-id actions))
-    (send! channel (pr-str {:cmd :environment-id :environment-id new-env-id}))))
-
-(defn handler [request]
-  (with-channel request channel
-    (on-close channel (fn [status] (cmd-handler {:cmd :unregister} channel)))
-    (on-receive channel (fn [data]
-                          (cmd-handler (edn/read-string {:readers *data-readers*} data)
-                                       channel)))))
-
-(defn edn-resp [data & [status]]
-  {:status (or status 200)
-   :headers {"Content-Type" "application/edn"}
-   :body (pr-str data)})
 
 (defn boards [req]
   (friend/authorize #{::user/user}
@@ -99,7 +35,7 @@
   (GET "/boards" [] boards)
   (POST "/boards/add" [] add-board)
   (POST "/signup" [] signup)
-  (GET "/ws" [] handler)
+  (context "/env" [] api.env/api-routes)
   (friend/logout (ANY "/logout" request (resp/redirect "/"))))
 
 (def web-handler
@@ -123,5 +59,5 @@
                   (reload/wrap-reload web-handler)
                   web-handler)]
     (run-server handler {:port port})
-    (ping-clients)
+    (api.env/ping-clients)
     (println "Running on " port)))

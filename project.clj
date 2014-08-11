@@ -14,7 +14,6 @@
                  [http-kit "2.1.16"]
                  [ring/ring-core "1.3.0"]
                  [ring/ring-devel "1.3.0"]
-                 [fogus/ring-edn "0.2.0"]
                  [compojure "1.1.6"]
                  [javax.servlet/servlet-api "2.5"]
                  [com.keminglabs/cljx "0.4.0"]
