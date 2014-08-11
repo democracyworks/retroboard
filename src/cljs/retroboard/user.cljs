@@ -58,13 +58,16 @@
        :url "/boards"
        :chan ch})))
 
-(defn input [owner id placeholder & type]
-  (dom/input #js {:type (or (first type) "text")
+(defn input [id placeholder on-change & [type]]
+  (dom/input #js {:type (or type "text")
                   :id (name id)
-                  :onChange (fn [e]
-                              (om/set-state! owner id
-                                             (.. e -target -value)))
+                  :onChange on-change
                   :placeholder placeholder}))
+
+(defn handle-change [owner id]
+  (fn [e]
+    (let [new-value (.. e -target -value)]
+      (om/set-state! owner id new-value))))
 
 (defn login-view [app owner {:keys [on-login]}]
   (reify
@@ -84,8 +87,11 @@
       (dom/div #js {:id "login-signup"}
                (dom/form #js {:id "login"
                               :style (display (= screen :login))}
-                         (input owner :email "Your username or email")
-                         (input owner :password "Your password" "password")
+                         (input :email "Your username or email"
+                                (handle-change owner :email))
+                         (input :password "Your password"
+                                (handle-change owner :password)
+                                "password")
                          (dom/button
                           #js {:onClick (fn [e]
                                           (.preventDefault e)
@@ -98,9 +104,13 @@
                                 "or sign up"))
                (dom/form #js {:id "signup"
                               :style (display (= screen :signup))}
-                         (input owner :username "Choose a username")
-                         (input owner :email "Your email")
-                         (input owner :password "Choose a password" "password")
+                         (input :username "Choose a username"
+                                (handle-change owner :username))
+                         (input :email "Your email"
+                                (handle-change owner :email))
+                         (input :password "Choose a password"
+                                (handle-change owner :password)
+                                "password")
                          (dom/button
                           #js {:onClick (fn [e]
                                           (.preventDefault e)
