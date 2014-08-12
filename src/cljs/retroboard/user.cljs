@@ -16,7 +16,7 @@
   ([email password ch]
      (xhr/edn-xhr
       {:method :post
-       :url "/login"
+       :url "/user/login"
        :data {:username email
               :password password}
        :chan ch})))
@@ -29,7 +29,7 @@
   ([username email password ch]
      (xhr/edn-xhr
       {:method :post
-       :url "/signup"
+       :url "/user/signup"
        :data {:username username
               :email email
               :password password}
@@ -43,7 +43,7 @@
   ([eid ch]
      (xhr/edn-xhr
       {:method :post
-       :url "/boards/add"
+       :url "/user/boards/add"
        :data {:eid eid}
        :chan ch})))
 
@@ -55,7 +55,7 @@
   ([ch]
      (xhr/edn-xhr
       {:method :get
-       :url "/boards"
+       :url "/user/boards"
        :chan ch})))
 
 (defn input [id placeholder on-change & [type]]
@@ -68,7 +68,6 @@
   (fn [e]
     (let [new-value (.. e -target -value)]
       (om/set-state! owner id new-value))))
-
 (defn login-view [app owner {:keys [on-login]}]
   (reify
     om/IInitState
@@ -152,6 +151,6 @@
                                    (dom/h1 nil "Your Boards")
                                    (apply dom/ul nil
                                           (map #(dom/li nil (board-link %)) boards)))
-                          (dom/a #js {:href "/logout"} "Logout"))
+                          (dom/a #js {:href "/user/logout"} "Logout"))
                  (dom/div nil
                           (om/build login-view app {:opts {:on-login #(fetch-boards ch)}})))))))
