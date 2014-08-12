@@ -5,7 +5,6 @@
             [retroboard.user :as user]
             [retroboard.actions :as a]
             [retroboard.templates :as ts]
-            [retroboard.config :as config]
             [retroboard.util :refer [display]]
             [retroboard.resource :refer [temprid]]
             [cljs.core.async :refer [chan <! put! pub sub unsub]]
@@ -17,6 +16,8 @@
            goog.net.WebSocket.EventType))
 
 (enable-console-print!)
+
+(def ws-url (str "ws://" (.. js/window -location -host) "/env"))
 
 (defn web-socket []
   (let [ws (WebSocket.)
@@ -32,7 +33,7 @@
                    (fn [e]
                      (let [msg (reader/read-string (.-message e))]
                        (put! incoming msg))))
-    (.open ws config/ws-url)
+    (.open ws ws-url)
     {:to-send to-send :incoming (pub incoming :cmd) :websocket ws}))
 
 (defn create-environment
@@ -40,7 +41,7 @@
      (let [create-ch (chan)]
        (xhr/edn-xhr
         {:method :post
-         :url "/env/"
+         :url "/env"
          :data {:initial-actions initial-actions}
          :chan create-ch})
        (go (:body (<! create-ch))))))

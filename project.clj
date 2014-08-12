@@ -45,13 +45,13 @@
          :output-extension "css"}
   :cljsbuild {
               :builds {:dev
-                       {:source-paths ["src/cljs" "target/classes" "environments/dev"]
+                       {:source-paths ["src/cljs" "target/classes"]
                         :compiler {:output-to "dev-resources/public/js/main.js"
                                    :output-dir "dev-resources/public/js/out"
                                    :optimizations :none
                                    :source-map true}}
                        :production
-                       {:source-paths ["src/cljs" "target/classes" "environments/production"]
+                       {:source-paths ["src/cljs" "target/classes"]
                         :compiler {:output-to "resources/public/js/prod.js"
                                    :optimizations :advanced
                                    :pretty-print false
