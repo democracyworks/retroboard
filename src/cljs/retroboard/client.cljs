@@ -33,8 +33,8 @@
                    (fn [e]
                      (let [msg (reader/read-string (.-message e))]
                        (put! incoming msg))))
-    (.open ws ws-url)
-    {:to-send to-send :incoming (pub incoming :cmd) :websocket ws}))
+    {:to-send to-send :incoming (pub incoming :cmd) :websocket ws
+     :connect (fn [] (.open ws ws-url))}))
 
 (defn create-environment
   ([& [initial-actions]]
@@ -307,17 +307,18 @@
     (will-mount [_]
       (let [action-chan (chan)
             eid (:id app)]
-        (error-handler app)
         (when eid
+          ((get-in app [:connection :connect]))
+          (error-handler app)
           (put! (get-in (if (om/rendering?) app @app) [:connection :to-send])
-                {:cmd :register :action eid}))
-        (sub (get-in app [:connection :incoming]) :cmds action-chan)
-        (go (let [actions (:commands (<! action-chan))]
-              (om/update! app :connected :connected)
-              (user/add-board eid)
-              (go-loop [actions actions]
-                       (om/transact! app :state (partial apply-actions actions))
-                       (recur (:commands (<! action-chan))))))))
+                {:cmd :register :action eid})
+          (sub (get-in app [:connection :incoming]) :cmds action-chan)
+          (go (let [actions (:commands (<! action-chan))]
+                (om/update! app :connected :connected)
+                (user/add-board eid)
+                (go-loop [actions actions]
+                         (om/transact! app :state (partial apply-actions actions))
+                         (recur (:commands (<! action-chan)))))))))
     om/IRenderState
     (render-state [this state]
       (let [connection (om/value (:connection app))
