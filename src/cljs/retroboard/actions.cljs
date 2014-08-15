@@ -32,7 +32,7 @@
 
   (move-note
    [id column-id new-column-id state]
-   (let [note (get-in state [column-id :notes id])]
+   (if-let [note (get-in state [column-id :notes id])]
      (-> state
          (update-in [column-id :notes] dissoc id)
          (assoc-in [new-column-id :notes id] note)))))
