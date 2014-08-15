@@ -5,7 +5,7 @@
             [retroboard.user :as user]
             [retroboard.actions :as a]
             [retroboard.templates :as ts]
-            [retroboard.util :refer [display]]
+            [retroboard.util :refer [display translate3d]]
             [retroboard.resource :refer [temprid]]
             [cljs.core.async :refer [chan <! put! pub sub unsub] :as async]
             [goog.events :as events]
@@ -245,8 +245,8 @@
 
 (defn -drag-start [owner event]
   (let [node (om/get-node owner)
-        rel-x (- (.-pageX event) (.-offsetLeft node))
-        rel-y (- (.-pageY event) (.-offsetTop node))
+        rel-x (+ (.-offsetLeft node) (- (.-pageX event) (.-offsetLeft node)))
+        rel-y (+ (.-offsetTop node) (- (.-pageY event) (.-offsetTop node)))
         move (async/tap mouse-move-mult (chan (async/sliding-buffer 5)))
         up (async/tap mouse-up-mult (chan))
         dragger (om/get-state owner :dragger)]
@@ -254,7 +254,6 @@
           (alt!
            move ([ev] (drag-move dragger ev))
            up ([ev] (drag-end dragger ev)))))
-    (set! (.-width (.-style node)) (.-clientWidth node))
     (om/set-state! owner :move-ch move)
     (om/set-state! owner :up-ch up)
     (om/set-state! owner :state :mousedown)
@@ -268,7 +267,6 @@
     (async/untap mouse-move-mult move)
     (async/untap mouse-up-mult up)
     (when-not leave?
-      (set! (.-width (.-style node)) nil)
       (om/set-state! owner :state nil))))
 
 (defn free-drag [owner drop-fn droppable-nodes]
@@ -284,10 +282,8 @@
             new-x (- (.. event -pageX) rel-x)
             node (om/get-node owner)
             style (.-style node)]
-        (set! (.-left style) new-x)
-        (set! (.-top style) new-y)
-        (om/set-state! owner :ver-value new-x)
-        (om/set-state! owner :hor-value new-y))
+        (om/set-state! owner :x-value new-x)
+        (om/set-state! owner :y-value new-y))
       (if (= :mousedown (om/get-state owner :state))
         (om/set-state! owner :state :dragging)))
     IDragEnd
@@ -304,12 +300,14 @@
       (do (a/move-note connection (:note drag-data) (:column-id drag-data) drop-data)
           true))))
 
+
+
 (defn draggable [{:keys [drop-fn comp-fn state drag-data droppable-nodes] :as data} owner opts]
   (reify
     om/IInitState
     (init-state [_]
-      {:hor-value 0
-       :ver-value 0
+      {:x-value 0
+       :y-value 0
        :dragger (free-drag owner (partial drop-fn drag-data) droppable-nodes)})
     om/IWillMount
     (will-mount [_])
@@ -326,12 +324,9 @@
     (render-state [this s]
       (let [is-dragging (= (:state s) :dragging)]
         (dom/div #js {:className (str "draggable" (if is-dragging " dragging"))
-                      :style
-                      (clj->js (if is-dragging
-                                 {:left (om/get-state owner :ver-value)
-                                  :top  (om/get-state owner :hor-value)
-                                  :position "absolute"}
-                                 {}))}
+                      :style (translate3d is-dragging
+                                          (om/get-state owner :x-value)
+                                          (om/get-state owner :y-value))}
                  (om/build comp-fn state {:opts opts}))))))
 
 (defn droppable [{:keys [droppable-nodes comp-fn state drop-data]} owner {:keys [] :as opts}]
