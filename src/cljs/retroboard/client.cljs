@@ -247,7 +247,6 @@
   (let [node (om/get-node owner)
         rel-x (- (.-pageX event) (.-offsetLeft node))
         rel-y (- (.-pageY event) (.-offsetTop node))
-        node (om/get-node owner)
         move (async/tap mouse-move-mult (chan (async/sliding-buffer 5)))
         up (async/tap mouse-up-mult (chan))
         dragger (om/get-state owner :dragger)]
@@ -262,15 +261,15 @@
     (om/set-state! owner :rel-x rel-x)
     (om/set-state! owner :rel-y rel-y)))
 
-
-(defn -drag-end [owner event]
+(defn -drag-end [owner event & [leave?]]
   (let [node (om/get-node owner)
         move (om/get-state owner :move-ch)
         up (om/get-state owner :up-ch)]
-    (set! (.-width (.-style node)) nil)
     (async/untap mouse-move-mult move)
     (async/untap mouse-up-mult up)
-    (om/set-state! owner :state nil)))
+    (when-not leave?
+      (set! (.-width (.-style node)) nil)
+      (om/set-state! owner :state nil))))
 
 (defn free-drag [owner drop-fn droppable-nodes]
   (reify
@@ -293,16 +292,17 @@
         (om/set-state! owner :state :dragging)))
     IDragEnd
     (drag-end [_ event]
-      (-drag-end owner event)
       (if-let [drop-data (targeted-node @droppable-nodes (.-pageX event) (.-pageY event))]
-        (drop-fn drop-data)))))
+        (-drag-end owner event (drop-fn drop-data))
+        (-drag-end owner event)))))
 
 
 (defn perform-drop [connection [drag-type drag-data] [drop-type drop-data]]
   (case [drag-type drop-type]
     [:note :column]
     (if (not= (:column-id drag-data) drop-data)
-      (a/move-note connection (:note drag-data) (:column-id drag-data) drop-data))))
+      (do (a/move-note connection (:note drag-data) (:column-id drag-data) drop-data)
+          true))))
 
 (defn draggable [{:keys [drop-fn comp-fn state drag-data droppable-nodes] :as data} owner opts]
   (reify
