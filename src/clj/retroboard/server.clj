@@ -30,5 +30,4 @@
                   (reload/wrap-reload web-handler)
                   web-handler)]
     (run-server handler {:port port})
-    (api.env/ping-clients)
     (println "Running on " port)))
