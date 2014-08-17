@@ -1,0 +1,3 @@
+-signup/login form validation
+-handle non-existent boards better
+-add some links to the header

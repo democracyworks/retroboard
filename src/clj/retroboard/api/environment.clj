@@ -10,17 +10,13 @@
 (defn get-eid [channel]
   (ffirst (filter (fn [[eid channels]] (channels channel)) @subscriptions)))
 
-(defn all-clients []
-  (apply clojure.set/union (vals @subscriptions)))
-
 (defn ping [channel]
   (send! channel (pr-str {:ping :pong})))
 
-(defn ping-clients []
-  (future (loop []
+(defn ping-channel [channel]
+  (future (while true
             (Thread/sleep 1000)
-            (dorun (map ping (all-clients)))
-            (recur))))
+            (ping channel))))
 
 (defmulti cmd-handler (fn [data _] (:cmd data)))
 (defmethod cmd-handler :register [data channel]
@@ -49,10 +45,13 @@
 
 (defn websocket-handler [request]
   (with-channel request channel
-    (on-close channel (fn [status] (cmd-handler {:cmd :unregister} channel)))
-    (on-receive channel (fn [data]
-                          (cmd-handler (edn/read-string {:readers *data-readers*} data)
-                                       channel)))))
+    (let [ping-future (ping-channel channel)]
+      (on-close channel (fn [status]
+                          (future-cancel ping-future)
+                          (cmd-handler {:cmd :unregister} channel)))
+      (on-receive channel (fn [data]
+                            (cmd-handler (edn/read-string {:readers *data-readers*} data)
+                                         channel))))))
 
 (defn create-environment [req]
   (let [{:keys [initial-actions]} (:edn-params req)
