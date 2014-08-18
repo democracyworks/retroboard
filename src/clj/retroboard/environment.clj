@@ -1,6 +1,7 @@
 (ns retroboard.environment
   (:require [taoensso.carmine :as car :refer [wcar]]
             [retroboard.util :refer [rand-str]]
+            [clojure.core.async :refer [chan put!]]
             [retroboard.resource :as resource]
             [clojure.edn :as edn]))
 
@@ -17,6 +18,25 @@
 
 (defn exists? [eid]
   (= (wcar* (car/hexists env-map eid)) 1))
+
+(def channel-id (partial str "env."))
+
+(defn publish-actions [eid actions]
+  (wcar* (car/publish (channel-id eid) actions)))
+
+(def listener
+  (car/with-new-pubsub-listener (:spec server1-conn)
+    {}))
+
+(defn subscribe [eid]
+  (let [ch (chan 3)]
+    (car/with-open-listener listener
+      (car/subscribe (channel-id eid)))
+    (swap! (:state listener) assoc (channel-id eid)
+           (fn [[type chname message]]
+             (if (= type "message")
+               (put! ch message))))
+    ch))
 
 (defn resource-generator [eid]
   (let [rid (str eid "." "current-rid")]

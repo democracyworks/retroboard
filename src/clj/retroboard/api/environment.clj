@@ -1,7 +1,7 @@
 (ns retroboard.api.environment
   (:require [retroboard.environment :as env]
             [retroboard.util :refer [edn-resp]]
-            [clojure.core.async :refer [chan mult put! tap untap <! go-loop]]
+            [clojure.core.async :refer [chan mult put! tap untap <! map< go-loop go]]
             [org.httpkit.server :refer [with-channel on-close on-receive send!]]
             [clojure.edn :as edn]
             [compojure.core :refer [routes GET POST]]))
@@ -21,11 +21,14 @@
   (or (@env-chans eid)
       (let [c (chan)]
         (swap! env-chans assoc eid c)
+        (go (while true
+              (let [actions (<! c)]
+                (env/publish-actions eid actions))))
         c)))
 
 (defn mult-for [eid]
   (or (@env-mults eid)
-      (let [m (mult (chan-for eid))]
+      (let [m (mult (map< (fn [a] {:cmd :cmds :commands a}) (env/subscribe eid)))]
         (swap! env-mults assoc eid m)
         m)))
 
@@ -50,7 +53,7 @@
   (println "Received " data " for " @eid-atom)
   (when (and @eid-atom (env/exists? @eid-atom))
     (let [actions (env/append-actions @eid-atom (:actions data))]
-      (put! (chan-for @eid-atom) {:cmd :cmds :commands actions}))))
+      (put! (chan-for @eid-atom) actions))))
 
 (defmethod cmd-handler :action [data eid-atom out-ch]
   (cmd-handler {:cmd :actions :actions [(:action data)]} eid-atom out-ch))
