@@ -42,7 +42,9 @@
        (xhr/edn-xhr
         {:method :post
          :url "/env"
-         :data {:initial-actions initial-actions}
+         :data {:initial-actions initial-actions
+                :on-join (a/user-join)
+                :on-leave (a/user-leave)}
          :chan create-ch})
        (go (:body (<! create-ch))))))
 
@@ -467,7 +469,7 @@
     om/IRenderState
     (render-state [this state]
       (let [connection (om/value (:connection app))
-            columns (:state app)]
+            columns (get-in app [:state :columns])]
         (dom/div nil
                  (if (:id app)
                    (case (:connected app)

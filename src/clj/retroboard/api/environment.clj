@@ -14,17 +14,7 @@
             (Thread/sleep 1000)
             (ping channel))))
 
-(def env-chans (atom {}))
 (def env-mults (atom {}))
-
-(defn chan-for [eid]
-  (or (@env-chans eid)
-      (let [c (chan)]
-        (swap! env-chans assoc eid c)
-        (go (while true
-              (let [actions (<! c)]
-                (env/publish-actions eid actions))))
-        c)))
 
 (defn mult-for [eid]
   (or (@env-mults eid)
@@ -40,6 +30,7 @@
       (do
         (put! out-ch {:cmd :cmds :commands (env/history eid)})
         (tap (mult-for eid) out-ch)
+        (env/on-join eid)
         (reset! eid-atom eid))
       (put! out-ch {:cmd :error :error :no-such-environment}))))
 
@@ -47,13 +38,13 @@
   (println "Unregistering")
   (when (and @eid-atom (env/exists? @eid-atom))
     (untap (mult-for @eid-atom) out-ch)
+    (env/on-leave @eid-atom)
     (reset! eid-atom nil)))
 
 (defmethod cmd-handler :actions [data eid-atom out-ch]
   (println "Received " data " for " @eid-atom)
   (when (and @eid-atom (env/exists? @eid-atom))
-    (let [actions (env/append-actions @eid-atom (:actions data))]
-      (put! (chan-for @eid-atom) actions))))
+    (env/append-actions @eid-atom (:actions data))))
 
 (defmethod cmd-handler :action [data eid-atom out-ch]
   (cmd-handler {:cmd :actions :actions [(:action data)]} eid-atom out-ch))
@@ -75,8 +66,8 @@
                                          eid out-chan))))))
 
 (defn create-environment [req]
-  (let [{:keys [initial-actions]} (:edn-params req)
-        new-env-id (env/create)]
+  (let [{:keys [initial-actions on-join on-leave]} (:edn-params req)
+        new-env-id (env/create on-join on-leave)]
     (when initial-actions
       (env/append-actions new-env-id initial-actions))
     (edn-resp new-env-id 201)))
