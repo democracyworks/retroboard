@@ -83,10 +83,7 @@
                                               (create-column)))
                                  :onChange (fn [e]
                                              (om/set-state! owner :header
-                                                            (.. e -target -value)))})
-                 (dom/span #js {:onClick create-column
-                                :className "add-column"
-                                :disabled (empty? header)}))))))
+                                                            (.. e -target -value)))}))))))
 
 (defn delete-column-button [app owner]
   (reify
@@ -446,6 +443,30 @@
              (let [error (:error (<! error-chan))]
                (case error
                  :no-such-environment (om/update! app :connected :no-such-environment))))))
+
+(defn toggle-class [node classname]
+  (.add (.-classList node) classname)
+  (js/setTimeout #(.remove (.-classList node) classname) 500))
+
+(defn user-count-view [app owner]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:count (:user-count app)})
+    om/IDidUpdate
+    (did-update [_ next-props next-state]
+      (let [old-count (om/get-state owner :count)
+            new-count (:user-count app)]
+        (cond (> old-count new-count)
+              (toggle-class (om/get-node owner) "decrease")
+              (< old-count new-count)
+              (toggle-class (om/get-node owner) "increase"))
+        (om/set-state! owner :count new-count)))
+    om/IRenderState
+    (render-state [_ state]
+      (dom/div #js {:id "user-count"}
+               (:user-count app)))))
+
 (defn view [app owner]
   (reify
     om/IInitState
@@ -479,7 +500,9 @@
                      (dom/h3 nil "Sorry. That environment doesn't exist. Why not make a new one?")
                      :connected
                      (dom/div #js {:className "board"}
-                              (om/build create-column-button (:connection app))
+                              (dom/div #js {:id "header"}
+                                       (om/build create-column-button (:connection app))
+                                       (om/build user-count-view (:state app)))
                               (apply dom/div #js {:id "columns"}
                                      (map (fn [col]
                                             (om/build droppable

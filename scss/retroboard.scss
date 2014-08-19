@@ -32,7 +32,7 @@
     animation-fill-mode: forwards; /* this prevents the animation from restarting! */
 }
 
-@include keyframe(animationFrames){
+@include keyframe(fadeIn){
   0% {
     left:0px;
     top:0px;
@@ -42,6 +42,24 @@
     left:0px;
     top:0px;
     opacity:1;
+  }
+}
+
+@include keyframe(greenFlash){
+  0% {
+    background: green;
+  }
+  100% {
+    background: white;
+  }
+}
+
+@include keyframe(redFlash){
+  0% {
+    background: red;
+  }
+  100% {
+    background: white;
   }
 }
 
@@ -119,7 +137,7 @@ body { margin: 0; }
 
 
     .note-wrapper {
-      @include animation(0, 0.7s, animationFrames);
+      @include animation(0, 0.7s, fadeIn);
       background: white;
       border: 2px solid $color;
       border-top: 15px solid $color;
@@ -146,21 +164,50 @@ body { margin: 0; }
 
   input:focus, textarea:focus { outline: none; }
 
-  #create-column {
+  #header {
     background: $main-text-color;
+    padding-left: 5%;
+    overflow: hidden;
 
-    input {
-      border: 1px solid $grey;
-      color: lighten($main-text-color, 20%);
-      font-size: 1em;
-      line-height: 1.35em;
-      margin: 10px 4%;
-      padding: 10px;
+    @media all and (max-width: 800px) { padding-left: 0px; } // Small Size Screens
+
+    #create-column {
+      float: left;
       width: 46%;
-      @media all and (max-width: 800px) { width: 92%; } // Small Size Screens
+      @media all and (max-width: 800px) { width: 85%; } // Small Size Screens
+      input {
+        width: 100%;
+        border: 1px solid $grey;
+        color: lighten($main-text-color, 20%);
+        font-size: 1em;
+        line-height: 1.35em;
+        margin: 10px 1px;
+        padding: 10px;
+      }
+
+      .add-column { display: none; }
     }
 
-    .add-column { display: none; }
+    #user-count {
+      &.increase {
+        @include animation(0, 0.5s, greenFlash);
+      }
+      &.decrease {
+        @include animation(0, 0.5s, redFlash);
+      }
+      @include condensed-text;
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 24px;
+      float: right;
+      background: white;
+      color: black;
+
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+      border-radius: 3px;
+    }
+
   }
 
   #columns {
