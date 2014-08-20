@@ -64,19 +64,24 @@
   (edn/read-string (wcar* (car/hget env-map eid))))
 
 
-(let [listener (car/with-new-pubsub-listener (:spec server1-conn) {})]
-  (defn subscribe-to-redis [eid ch]
-    (car/with-open-listener listener
-      (car/subscribe (channel-id eid)))
-    (swap! (:state listener) assoc (channel-id eid)
-           (fn [[type _ message]]
-             (if (= type "message")
-               (put! ch message)))))
+(let [listener (atom nil)]
+  (defn get-listener []
+    (swap! listener
+           (fn [l] (or l (car/with-new-pubsub-listener (:spec server1-conn) {}))))
+    @listener))
 
-  (defn unsubscribe-from-redis [eid]
-    (car/with-open-listener listener
-      (car/unsubscribe (channel-id eid)))
-    (swap! (:state listener) dissoc (channel-id eid))))
+(defn subscribe-to-redis [eid ch]
+  (car/with-open-listener (get-listener)
+    (car/subscribe (channel-id eid)))
+  (swap! (:state (get-listener)) assoc (channel-id eid)
+         (fn [[type _ message]]
+           (if (= type "message")
+             (put! ch message)))))
+
+(defn unsubscribe-from-redis [eid]
+  (car/with-open-listener (get-listener)
+    (car/unsubscribe (channel-id eid)))
+  (swap! (:state (get-listener)) dissoc (channel-id eid)))
 
 (defn add-subscriber [eid subscribers]
   (let [[_ subscribe-chan]
