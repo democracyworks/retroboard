@@ -58,15 +58,13 @@
   (car/with-new-pubsub-listener (:spec server1-conn)
     {}))
 
-(defn subscribe [eid]
-  (let [ch (chan 3)]
-    (car/with-open-listener listener
-      (car/subscribe (channel-id eid)))
-    (swap! (:state listener) assoc (channel-id eid)
-           (fn [[type chname message]]
-             (if (= type "message")
-               (put! ch message))))
-    ch))
+(defn subscribe [eid ch]
+  (car/with-open-listener listener
+    (car/subscribe (channel-id eid)))
+  (swap! (:state listener) assoc (channel-id eid)
+         (fn [[type chname message]]
+           (if (= type "message")
+             (put! ch message)))))
 
 (defn on-join [eid]
   (append-actions eid [(wcar* (car/get (str env-map "." eid ".on-join")))]))

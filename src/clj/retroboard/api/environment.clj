@@ -14,13 +14,19 @@
             (Thread/sleep 1000)
             (ping channel))))
 
-(def env-mults (atom {}))
+(def env-mults (atom [{}]))
 
 (defn mult-for [eid]
-  (or (@env-mults eid)
-      (let [m (mult (map< (fn [a] {:cmd :cmds :commands a}) (env/subscribe eid)))]
-        (swap! env-mults assoc eid m)
-        m)))
+  (let [ch (chan 3)
+        [new-env-mults subscribed?]
+        (swap! env-mults (fn [[env-mults]]
+                           (if (env-mults eid) [env-mults true]
+                               [(assoc env-mults eid
+                                       (mult (map< (fn [a] {:cmd :cmds :commands a}) ch)))
+                                false])))]
+    (when-not subscribed?
+      (env/subscribe eid ch))
+    (new-env-mults eid)))
 
 (defmulti cmd-handler (fn [data _ _] (:cmd data)))
 (defmethod cmd-handler :register [data eid-atom out-ch]
