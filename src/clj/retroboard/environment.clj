@@ -1,7 +1,7 @@
 (ns retroboard.environment
   (:require [taoensso.carmine :as car :refer [wcar]]
             [retroboard.util :refer [rand-str]]
-            [clojure.core.async :refer [chan put!]]
+            [clojure.core.async :refer [chan put! mult tap untap]]
             [retroboard.resource :as resource]
             [clojure.edn :as edn]))
 
@@ -54,18 +54,6 @@
     (publish-actions eid actions-with-ids)
     actions-with-ids))
 
-(def listener
-  (car/with-new-pubsub-listener (:spec server1-conn)
-    {}))
-
-(defn subscribe [eid ch]
-  (car/with-open-listener listener
-    (car/subscribe (channel-id eid)))
-  (swap! (:state listener) assoc (channel-id eid)
-         (fn [[type chname message]]
-           (if (= type "message")
-             (put! ch message)))))
-
 (defn on-join [eid]
   (append-actions eid [(wcar* (car/get (str env-map "." eid ".on-join")))]))
 
@@ -74,3 +62,53 @@
 
 (defn history [eid]
   (edn/read-string (wcar* (car/hget env-map eid))))
+
+
+(let [listener (car/with-new-pubsub-listener (:spec server1-conn) {})]
+  (defn subscribe-to-redis [eid ch]
+    (car/with-open-listener listener
+      (car/subscribe (channel-id eid)))
+    (swap! (:state listener) assoc (channel-id eid)
+           (fn [[type _ message]]
+             (if (= type "message")
+               (put! ch message)))))
+
+  (defn unsubscribe-from-redis [eid]
+    (car/with-open-listener listener
+      (car/unsubscribe (channel-id eid)))
+    (swap! (:state listener) dissoc (channel-id eid))))
+
+(defn add-subscriber [eid subscribers]
+  (let [[_ subscribe-chan]
+        (swap! subscribers
+               (fn [[subscribers]]
+                 (let [ch (chan 3)]
+                   (if (subscribers eid)
+                     [(update-in subscribers [eid :count] inc)]
+                     [(assoc subscribers eid
+                             {:mult (mult ch)
+                              :count 1})
+                      ch]))))]
+    (when subscribe-chan
+      (subscribe-to-redis eid subscribe-chan))))
+
+(defn remove-subscriber [eid subscribers]
+  (let [[_ unsubscribe?]
+        (swap! subscribers
+               (fn [[subscribers]]
+                 (if (= (get-in subscribers [eid :count]) 1)
+                   [(dissoc subscribers eid) true]
+                   [(update-in subscribers [eid :count] dec)])))]
+    (when unsubscribe?
+      (unsubscribe-from-redis eid))))
+
+
+(let [subscribers (atom [{}])
+      get-mult (fn [eid] (get-in @subscribers [0 eid :mult]))]
+  (defn subscribe [eid subscriber-chan]
+    (add-subscriber eid subscribers)
+    (tap (get-mult eid) subscriber-chan))
+
+  (defn unsubscribe [eid subscriber-chan]
+    (untap (get-mult eid) subscriber-chan)
+    (remove-subscriber eid subscribers)))
