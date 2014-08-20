@@ -16,7 +16,7 @@
 
   (delete-column
    [id state]
-   {:columns (dissoc (:columns state) id)})
+   (update-in state [:columns] dissoc id))
 
   (edit-column-header
    [id new-header state]
