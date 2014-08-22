@@ -51,10 +51,11 @@
                                    :optimizations :none
                                    :source-map true}}
                        :production
-                       {:source-paths ["src/cljs" "target/classes"]
+                       {:source-paths ["src/cljs" "target/classes" "vendor"]
                         :compiler {:output-to "resources/public/js/prod.js"
                                    :optimizations :advanced
                                    :pretty-print false
-                                   :preamble ["react/react.min.js"]
+                                   :preamble ["ZeroClipboard.min.js"
+                                              "react/react.min.js"]
                                    :externs ["react/externs/react.js"
                                              "externs.js"]}}}})

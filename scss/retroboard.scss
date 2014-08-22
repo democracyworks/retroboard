@@ -1,6 +1,13 @@
 @import url(http://fonts.googleapis.com/css?family=Open+Sans);
 @import url(http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700);
 
+@mixin icon($hex) {
+  &:before {
+    font-family: FontAwesome;
+    content: $hex;
+  }
+}
+
 @mixin keyframe ($animation_name) {
     @-webkit-keyframes $animation_name {
         @content;
@@ -146,6 +153,9 @@ body { margin: 0; }
         border-bottom: 1px dotted $color;
       }
 
+      .vote {
+        @include icon('\f067');
+      }
       .vote:hover {
         color: $color;
       }
@@ -172,9 +182,9 @@ body { margin: 0; }
     @media all and (max-width: 800px) { padding-left: 0px; } // Small Size Screens
 
     #create-column {
+      @media all and (max-width: 800px) { width: 85%; } // Small Size Screens
       float: left;
       width: 46%;
-      @media all and (max-width: 800px) { width: 85%; } // Small Size Screens
       input {
         width: 100%;
         border: 1px solid $grey;
@@ -188,6 +198,30 @@ body { margin: 0; }
       .add-column { display: none; }
     }
 
+    #copy-board-url {
+      @media all and (max-width: 800px) {
+        display: none;
+      } // Small Size Screens
+      background: white;
+      font-size: 18px;
+      float: right;
+      margin: 5px;
+      padding: 10px 6px;
+      font-size: 32px;
+      float: right;
+      background: white;
+      -moz-border-radius: 3px;
+      -webkit-border-radius: 3px;
+      border-radius: 3px;
+
+      @include icon('\f0ea');
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+
     #user-count {
       &.increase {
         @include animation(0, 0.5s, greenFlash);
@@ -195,6 +229,10 @@ body { margin: 0; }
       &.decrease {
         @include animation(0, 0.5s, redFlash);
       }
+      @media all and (max-width: 800px) {
+        font-size: 20px;
+        padding: 15px 10px;
+      } // Small Size Screens
       @include condensed-text;
       margin: 5px;
       padding: 10px 15px;
@@ -329,7 +367,7 @@ body { margin: 0; }
 
             &.delete-note {
               padding-right: 5px;
-
+              @include icon('\f00d');
               &:hover { color: red; }
             }
 
