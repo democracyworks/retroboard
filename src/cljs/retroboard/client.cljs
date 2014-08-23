@@ -457,7 +457,7 @@
                  (.setData clipboard "text/plain" (.-href js/location)))))))
     om/IRender
     (render [_]
-      (dom/button #js {:id "copy-board-url"
+      (dom/span #js {:id "copy-board-url"
                      :title "Copy board url to share"}))))
 
 (defn user-count-view [app owner]
