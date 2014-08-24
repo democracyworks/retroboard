@@ -8,7 +8,8 @@
             [ring.middleware.resource :refer [wrap-resource]]
             [ring.middleware.file-info :refer [wrap-file-info]]
             [compojure.core :refer [defroutes context GET]]
-            [compojure.handler :refer [site]]))
+            [compojure.handler :refer [site]])
+  (:gen-class))
 
 
 (defroutes app
