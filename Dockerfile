@@ -13,4 +13,4 @@ RUN lein uberjar
 
 EXPOSE 8080
 
-CMD ["java", "-jar" "target/retroboard-standalone.jar"]
+CMD ["java", "-jar", "target/retroboard-standalone.jar"]

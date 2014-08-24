@@ -6,7 +6,7 @@
             [clojure.edn :as edn]))
 
 (defn redis-uri [] (if (System/getenv "REDIS_PORT_6379_TCP_ADDR")
-                     (str "redis:"
+                     (str "redis://"
                           (System/getenv "REDIS_PORT_6379_TCP_ADDR")
                           ":"
                           (System/getenv "REDIS_PORT_6379_TCP_PORT"))
@@ -72,7 +72,7 @@
 (let [listener (atom nil)]
   (defn get-listener []
     (swap! listener
-           (fn [l] (or l (car/with-new-pubsub-listener (:spec server1-conn) {}))))
+           (fn [l] (or l (car/with-new-pubsub-listener (:spec (server1-conn)) {}))))
     @listener))
 
 (defn subscribe-to-redis [eid ch]
