@@ -4,9 +4,14 @@
             [monger.collection :as mc])
   (:import [org.bson.types ObjectId]))
 
-(def mongo-uri (or (System/getenv "MONGOHQ_URL") "mongodb://127.0.0.1/retroboard"))
+(defn mongo-uri [] (if (System/getenv "MONGO_PORT_27017_TCP_ADDR")
+                     (str "mongodb://"
+                          (System/getenv "MONGO_PORT_27017_TCP_ADDR")
+                          ":"
+                          (System/getenv "MONGO_PORT_27017_TCP_PORT")
+                          "/remboard")))
 
-(def db (:db (mg/connect-via-uri mongo-uri)))
+(defn db [] (:db (mg/connect-via-uri (mongo-uri))))
 (def users "users")
 
 (defn username-or-email? [username-or-email]
@@ -18,7 +23,7 @@
   {(username-or-email? username-or-email) username-or-email})
 
 (defn lookup [username-or-email]
-  (if-let [user (mc/find-one-as-map db users
+  (if-let [user (mc/find-one-as-map (db) users
                                     (lookup-cond username-or-email))]
     (update-in user [:roles]
                (comp set (partial map #(keyword "retroboard.user" %))))))
@@ -28,11 +33,11 @@
 
 (defn valid-email? [email]
   (and (email? email)
-       (not (mc/any? db users {:email email}))))
+       (not (mc/any? (db) users {:email email}))))
 
 (defn valid-username? [username]
   (and (not (email? username))
-       (not (mc/any? db users {:username username}))))
+       (not (mc/any? (db) users {:username username}))))
 
 (defn valid-password? [password]
   (> (count password) 6))
@@ -49,17 +54,17 @@
   (when (and (valid-username? username)
              (valid-email? email)
              (valid-password? password))
-    (mc/insert-and-return db users (new-user username email password))))
+    (mc/insert-and-return (db) users (new-user username email password))))
 
 (defn delete-user [username-or-email]
-  (mc/remove db users (lookup-cond username-or-email)))
+  (mc/remove (db) users (lookup-cond username-or-email)))
 
 (defn cred-fn [creds]
   (creds/bcrypt-credential-fn lookup creds))
 
 (defn add-board [username eid]
   (let [user (lookup username)]
-    (mc/update-by-id db users
+    (mc/update-by-id (db) users
                      (:_id user)
                      (update-in user [:boards] (comp set #(conj % eid))))))
 
