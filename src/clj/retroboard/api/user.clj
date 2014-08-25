@@ -18,12 +18,12 @@
                       (edn-resp "OK"))))
 
 (defn signup [req]
-  (let [{:keys [username email password]} (:params req)
-        user (user/add-user username email password)]
+  (let [{:keys [email password]} (:params req)
+        user (user/add-user email password)]
     (if user
-      (friend/merge-authentication (edn-resp "Created!" 201) (assoc user :identity username))
+      (friend/merge-authentication (edn-resp "Created!" 201)
+                                   (assoc user :identity email))
       (edn-resp "Problem" 500))))
-
 
 (def api-routes
   (->

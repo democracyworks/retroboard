@@ -162,6 +162,8 @@ body { margin: 0; }
     color: darken(red, 30%);
   }
 
+  #register-page .static-header { min-height: 100%; }
+
   input:focus, textarea:focus { outline: none; }
 
   #header {

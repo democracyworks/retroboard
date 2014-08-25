@@ -513,12 +513,8 @@
                                                                :droppable-nodes (:droppable-nodes app)}
                                                        :drop-data [:column (first col)]}
                                                       {:react-key (first col)}))
-                                          (sort-by first columns)))))
-                   (dom/div nil
-                            (create-board-button "Empty Board")
-                            (create-board-button "Retro" ts/retro)
-                            (create-board-button "Pros/Cons" ts/pros-and-cons)
-                            (om/build user/profile-view app))))))))
+                                          (sort-by first columns)))))         
+                   (om/build user/profile-view app)))))))
 
 (def app-state (atom {:state {} :connection (web-socket)
                       :droppable-nodes {}}))
