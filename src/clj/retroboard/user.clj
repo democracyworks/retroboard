@@ -15,11 +15,15 @@
 (defn db [] (:db (mg/connect-via-uri (mongo-uri))))
 (def users "users")
 
+(def keywordize-roles
+  (comp set (partial map #(keyword "retroboard.user" %))))
+
 (defn lookup [email]
   (if-let [user (mc/find-one-as-map (db) users
                                     {:email email})]
-    (update-in user [:roles]
-               (comp set (partial map #(keyword "retroboard.user" %))))))
+    (-> user
+        (update-in [:roles] keywordize-roles)
+        (assoc :username (:email user)))))
 
 (defn email? [email]
   (and email (re-find  #".+@.+\..*" email)))
@@ -50,7 +54,6 @@
   (creds/bcrypt-credential-fn lookup creds))
 
 (defn add-board [email eid]
-  (println "Email: " email ", EID: " eid)
   (let [user (lookup email)]
     (mc/update-by-id (db) users
                      (:_id user)
