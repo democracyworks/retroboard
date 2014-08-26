@@ -60,7 +60,7 @@
 
 (defn input [id type on-change]
   (dom/div #js {:className "form-group"}
-           (dom/label #js {:for id
+           (dom/label #js {:htmlFor id
                            :className "col-sm-3 col-xs-12 control-label"}
                       type)
            (dom/div #js {:className "col-sm-9 col-xs-12"}
