@@ -11,6 +11,6 @@ WORKDIR /remboard
 
 RUN lein uberjar
 
-EXPOSE 8080
+EXPOSE 80
 
-CMD ["java", "-jar", "target/retroboard-standalone.jar"]
+CMD ["java", "-jar", "target/retroboard-standalone.jar", "80"]
