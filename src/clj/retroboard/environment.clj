@@ -5,10 +5,15 @@
             [retroboard.resource :as resource]
             [clojure.edn :as edn]))
 
-(def redis-uri (or (System/getenv "REDISCLOUD_URL") "redis://127.0.0.1:6379"))
+(defn redis-uri [] (if (System/getenv "REDIS_PORT_6379_TCP_ADDR")
+                     (str "redis://"
+                          (System/getenv "REDIS_PORT_6379_TCP_ADDR")
+                          ":"
+                          (System/getenv "REDIS_PORT_6379_TCP_PORT"))
+                     "redis://127.0.0.1:6379"))
 
-(def server1-conn {:pool {} :spec {:uri redis-uri}})
-(defmacro wcar* [& body] `(car/wcar server1-conn ~@body))
+(defn server1-conn [] {:pool {} :spec {:uri (redis-uri)}})
+(defmacro wcar* [& body] `(car/wcar (server1-conn) ~@body))
 (def env-map "envs")
 
 (defn find-id []
@@ -67,7 +72,7 @@
 (let [listener (atom nil)]
   (defn get-listener []
     (swap! listener
-           (fn [l] (or l (car/with-new-pubsub-listener (:spec server1-conn) {}))))
+           (fn [l] (or l (car/with-new-pubsub-listener (:spec (server1-conn)) {}))))
     @listener))
 
 (defn subscribe-to-redis [eid ch]

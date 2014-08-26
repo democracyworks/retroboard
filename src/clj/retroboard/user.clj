@@ -4,13 +4,19 @@
             [monger.collection :as mc])
   (:import [org.bson.types ObjectId]))
 
-(def mongo-uri (or (System/getenv "MONGOHQ_URL") "mongodb://127.0.0.1/retroboard"))
+(defn mongo-uri [] (if (System/getenv "MONGO_PORT_27017_TCP_ADDR")
+                     (str "mongodb://"
+                          (System/getenv "MONGO_PORT_27017_TCP_ADDR")
+                          ":"
+                          (System/getenv "MONGO_PORT_27017_TCP_PORT")
+                          "/remboard")
+                     "mongodb://127.0.0.1/retroboard"))
 
-(def db (:db (mg/connect-via-uri mongo-uri)))
+(defn db [] (:db (mg/connect-via-uri (mongo-uri))))
 (def users "users")
 
 (defn lookup [email]
-  (if-let [user (mc/find-one-as-map db users
+  (if-let [user (mc/find-one-as-map (db) users
                                     {:email email})]
     (update-in user [:roles]
                (comp set (partial map #(keyword "retroboard.user" %))))))
@@ -20,7 +26,7 @@
 
 (defn valid-email? [email]
   (and (email? email)
-       (not (mc/any? db users {:email email}))))
+       (not (mc/any? (db) users {:email email}))))
 
 (defn valid-password? [password]
   (> (count password) 6))
@@ -35,17 +41,18 @@
 (defn add-user [email password]
   (when (and (valid-email? email)
              (valid-password? password))
-    (mc/insert-and-return db users (new-user email password))))
+    (mc/insert-and-return (db) users (new-user email password))))
 
 (defn delete-user [email]
-  (mc/remove db users {:email email}))
+  (mc/remove (db) users {:email email}))
 
 (defn cred-fn [creds]
   (creds/bcrypt-credential-fn lookup creds))
 
 (defn add-board [email eid]
+  (println "Email: " email ", EID: " eid)
   (let [user (lookup email)]
-    (mc/update-by-id db users
+    (mc/update-by-id (db) users
                      (:_id user)
                      (update-in user [:boards] (comp set #(conj % eid))))))
 

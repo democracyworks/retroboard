@@ -158,8 +158,7 @@
             delete-note (fn []
                           (a/delete-note (om/value connection) column-id note-id))]
         (dom/div #js {:onClick delete-note
-                      :className "delete-note"}
-                 "✖")))))
+                      :className "delete-note"})))))
 
 (defn create-vote-button [app owner]
   (reify
@@ -169,8 +168,7 @@
             create-vote (fn []
                           (a/new-vote (om/value connection) (temprid) column-id note-id))]
         (dom/div #js {:onClick create-vote
-                      :className "vote"}
-                 "✚")))))
+                      :className "vote"})))))
 
 (defn change-env [env-id]
   (set! (.-pathname js/location) (str "e/" env-id)))
@@ -448,6 +446,20 @@
   (.add (.-classList node) classname)
   (js/setTimeout #(.remove (.-classList node) classname) 500))
 
+(defn copy-url-view [app owner]
+  (reify
+    om/IDidMount
+    (did-mount [_]
+      (let [client (js/ZeroClipboard. (om/get-node owner))]
+        (.on client "copy"
+             (fn [e]
+               (let [clipboard (.-clipboardData e)]
+                 (.setData clipboard "text/plain" (.-href js/location)))))))
+    om/IRender
+    (render [_]
+      (dom/span #js {:id "copy-board-url"
+                     :title "Copy board url to share"}))))
+
 (defn user-count-view [app owner]
   (reify
     om/IInitState
@@ -464,7 +476,8 @@
         (om/set-state! owner :count new-count)))
     om/IRenderState
     (render-state [_ state]
-      (dom/div #js {:id "user-count"}
+      (dom/div #js {:id "user-count"
+                    :title (str (:user-count app) " people are in this board")}
                (:user-count app)))))
 
 (defn view [app owner]
@@ -502,7 +515,9 @@
                      (dom/div #js {:className "board"}
                               (dom/div #js {:id "header"}
                                        (om/build create-column-button (:connection app))
-                                       (om/build user-count-view (:state app)))
+                                       (om/build user-count-view (:state app))
+                                       (om/build copy-url-view nil))
+
                               (apply dom/div #js {:id "columns"}
                                      (map (fn [col]
                                             (om/build droppable
@@ -525,6 +540,7 @@
     env-id))
 
 (defn setup! []
+  (.config js/ZeroClipboard #js {:swfPath "/swf/ZeroClipboard.swf"})
   (swap! app-state assoc :id (get-env-id))
   (om/root
    view
