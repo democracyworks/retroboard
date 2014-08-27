@@ -178,15 +178,27 @@ body { margin: 0; }
 
   #header {
     background: $main-text-color;
-    padding-left: 5%;
     overflow: hidden;
 
     @media all and (max-width: 800px) { padding-left: 0px; } // Small Size Screens
 
+    #back {
+      float: left;
+      font-size: 40px;
+      color: white;
+      padding: 12px 0 0 10px;
+      @include icon('\f053');
+
+      &:hover {
+        cursor: pointer;
+      }
+    }
+
     #create-column {
-      @media all and (max-width: 800px) { width: 85%; } // Small Size Screens
+      @media all and (max-width: 800px) { width: 70%; } // Small Size Screens
       float: left;
       width: 46%;
+      margin-left: 3%;
       input {
         width: 100%;
         border: 1px solid $grey;
@@ -196,8 +208,6 @@ body { margin: 0; }
         margin: 10px 1px;
         padding: 10px;
       }
-
-      .add-column { display: none; }
     }
 
     #copy-board-url {
@@ -218,8 +228,8 @@ body { margin: 0; }
 
       @include icon('\f0ea');
 
-      &:focus {
-        outline: none;
+      &.zeroclipboard-is-hover {
+        cursor: pointer;
       }
     }
 
