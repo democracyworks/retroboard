@@ -53,15 +53,6 @@
             ((a/apply-action action) state))
           initial-state actions))
 
-(defn column-placeholder []
-  (str "Add a Column (e.g. "
-       (first (shuffle ["What Went Well"
-                        "What Needs Improvement"
-                        "Action Items"
-                        "Keep Doing"
-                        "Start Doing"
-                        "Stop Doing"]))
-       ")"))
 
 (defn create-column-button [connection owner]
   (reify
@@ -76,7 +67,7 @@
         (dom/div #js {:id "create-column"}
                  (dom/input #js {:id "new-column" :name "new-column"
                                  :type "text"
-                                 :placeholder (column-placeholder)
+                                 :placeholder "Add a Column"
                                  :value header
                                  :onKeyUp (fn [e]
                                             (when (= 13 (.-keyCode e))
@@ -114,14 +105,6 @@
                                         :className "cancel-delete"}
                                    "No")))))))
 
-(defn note-placeholder []
-  (first (shuffle ["I just think that..."
-                   "What if we..."
-                   "Why do we always..."
-                   "Maybe next time we could..."
-                   "I like that we..."
-                   "We're doing better about..."])))
-
 (defn create-note-button [app owner]
   (reify
     om/IInitState
@@ -135,7 +118,6 @@
                             (om/set-state! owner :text "")))]
         (dom/div #js {:className "new-note-wrapper"}
                  (dom/textarea #js {:className "new-note" :name "new-note"
-                                    :placeholder (note-placeholder)
                                     :type "text"
                                     :value text
                                     :onKeyDown (fn [e]
