@@ -206,8 +206,6 @@ body { margin: 0; }
         margin: 10px 1px;
         padding: 10px;
       }
-
-      .add-column { display: none; }
     }
 
     #copy-board-url {
@@ -228,8 +226,8 @@ body { margin: 0; }
 
       @include icon('\f0ea');
 
-      &:focus {
-        outline: none;
+      &.zeroclipboard-is-hover {
+        cursor: pointer;
       }
     }
 
