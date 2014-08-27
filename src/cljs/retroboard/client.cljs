@@ -514,6 +514,8 @@
                      :connected
                      (dom/div #js {:className "board"}
                               (dom/div #js {:id "header"}
+                                       (dom/span #js {:id "back"
+                                                      :onClick #(.back js/history)})
                                        (om/build create-column-button (:connection app))
                                        (om/build user-count-view (:state app))
                                        (om/build copy-url-view nil))
