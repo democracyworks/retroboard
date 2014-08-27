@@ -517,6 +517,7 @@
                             (create-board-button "Empty Board")
                             (create-board-button "Retro" ts/retro)
                             (create-board-button "Pros/Cons" ts/pros-and-cons)
+                            (create-board-button "Card Wall" ts/card-wall)
                             (om/build user/profile-view app))))))))
 
 (def app-state (atom {:state {} :connection (web-socket)
