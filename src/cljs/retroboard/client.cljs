@@ -460,6 +460,11 @@
                     :title (str (:user-count app) " people are in this board")}
                (:user-count app)))))
 
+(defn back-or-home []
+  (if (empty? (.-referrer js/document))
+    (set! (.-location js/document) "/")
+    (.back js/history)))
+
 (defn view [app owner]
   (reify
     om/IInitState
@@ -495,7 +500,7 @@
                      (dom/div #js {:className "board"}
                               (dom/div #js {:id "header"}
                                        (dom/span #js {:id "back"
-                                                      :onClick #(.back js/history)})
+                                                      :onClick back-or-home})
                                        (om/build create-column-button (:connection app))
                                        (om/build user-count-view (:state app))
                                        (om/build copy-url-view nil))
