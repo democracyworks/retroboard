@@ -295,10 +295,7 @@
       (let [comp (om/get-node owner)
             dragger (om/get-state owner :dragger)]
         (set! (.-onmousedown comp) (fn [ev]
-                                     (.preventDefault ev)
-                                     (drag-start dragger ev)))
-        (set! (.-onmouseup comp) (fn [ev]
-                                   (drag-end dragger ev)))))
+                                     (drag-start dragger ev)))))
     om/IRenderState
     (render-state [this s]
       (let [is-dragging (= (:state s) :dragging)]
