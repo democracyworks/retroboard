@@ -295,10 +295,7 @@
       (let [comp (om/get-node owner)
             dragger (om/get-state owner :dragger)]
         (set! (.-onmousedown comp) (fn [ev]
-                                     (.preventDefault ev)
-                                     (drag-start dragger ev)))
-        (set! (.-onmouseup comp) (fn [ev]
-                                   (drag-end dragger ev)))))
+                                     (drag-start dragger ev)))))
     om/IRenderState
     (render-state [this s]
       (let [is-dragging (= (:state s) :dragging)]
@@ -322,9 +319,10 @@
 
 ;;;DRAGGING
 
-(defn begin-edit [owner]
+(defn begin-edit [owner cur-value]
   (set! (.-height (.-style (om/get-node owner "input")))
         (+ 15 (.-clientHeight (om/get-node owner "text"))))
+  (om/set-state! owner :edit-text cur-value)
   (om/set-state! owner :editing true))
 
 (defn editable [data owner {:keys [edit-key on-edit element wrap-class input-type] :as opts}]
@@ -332,7 +330,7 @@
     om/IInitState
     (init-state [_]
       {:editing false
-       :edit-text (get data edit-key)})
+       :edit-text nil})
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (when (and (om/get-state owner :editing)
@@ -347,7 +345,7 @@
         (dom/div #js {:className wrap-class}
                  (element #js {:style (display (not editing))
                                :ref "text"
-                               :onClick #(begin-edit owner)}
+                               :onClick #(begin-edit owner text)}
                           text)
                  ((or input-type dom/textarea)
                   #js {:className "edit-content-input"
@@ -462,6 +460,11 @@
                     :title (str (:user-count app) " people are in this board")}
                (:user-count app)))))
 
+(defn back-or-home []
+  (if (empty? (.-referrer js/document))
+    (set! (.-location js/document) "/")
+    (.back js/history)))
+
 (defn view [app owner]
   (reify
     om/IInitState
@@ -497,7 +500,7 @@
                      (dom/div #js {:className "board"}
                               (dom/div #js {:id "header"}
                                        (dom/span #js {:id "back"
-                                                      :onClick #(.back js/history)})
+                                                      :onClick back-or-home})
                                        (om/build create-column-button (:connection app))
                                        (om/build user-count-view (:state app))
                                        (om/build copy-url-view nil))
