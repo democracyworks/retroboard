@@ -319,9 +319,10 @@
 
 ;;;DRAGGING
 
-(defn begin-edit [owner]
+(defn begin-edit [owner cur-value]
   (set! (.-height (.-style (om/get-node owner "input")))
         (+ 15 (.-clientHeight (om/get-node owner "text"))))
+  (om/set-state! owner :edit-text cur-value)
   (om/set-state! owner :editing true))
 
 (defn editable [data owner {:keys [edit-key on-edit element wrap-class input-type] :as opts}]
@@ -329,7 +330,7 @@
     om/IInitState
     (init-state [_]
       {:editing false
-       :edit-text (get data edit-key)})
+       :edit-text nil})
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (when (and (om/get-state owner :editing)
@@ -344,7 +345,7 @@
         (dom/div #js {:className wrap-class}
                  (element #js {:style (display (not editing))
                                :ref "text"
-                               :onClick #(begin-edit owner)}
+                               :onClick #(begin-edit owner text)}
                           text)
                  ((or input-type dom/textarea)
                   #js {:className "edit-content-input"
