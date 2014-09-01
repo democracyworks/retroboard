@@ -4,7 +4,6 @@
             [retroboard.xhr :as xhr]
             [retroboard.user :as user]
             [retroboard.actions :as a]
-            [retroboard.templates :as ts]
             [retroboard.util :refer [display translate3d]]
             [retroboard.resource :refer [temprid]]
             [cljs.core.async :refer [chan <! put! pub sub unsub] :as async]
@@ -35,18 +34,6 @@
                        (put! incoming msg))))
     {:to-send to-send :incoming (pub incoming :cmd) :websocket ws
      :connect (fn [] (.open ws ws-url))}))
-
-(defn create-environment
-  ([& [initial-actions]]
-     (let [create-ch (chan)]
-       (xhr/edn-xhr
-        {:method :post
-         :url "/env"
-         :data {:initial-actions initial-actions
-                :on-join (a/user-join)
-                :on-leave (a/user-leave)}
-         :chan create-ch})
-       (go (:body (<! create-ch))))))
 
 (defn apply-actions [actions initial-state]
   (reduce (fn [state action]
@@ -151,22 +138,6 @@
                           (a/new-vote (om/value connection) (temprid) column-id note-id))]
         (dom/div #js {:onClick create-vote
                       :className "vote"})))))
-
-(defn change-env [env-id]
-  (set! (.-pathname js/location) (str "e/" env-id)))
-
-
-(defn create-board-button
-  ([title]
-     (create-board-button title nil))
-  ([title template]
-     (let [create-env (fn []
-                        (go
-                         (let [env-id (<! (create-environment template))]
-                           (change-env env-id))))]
-       (dom/button #js {:onClick create-env
-                        :className "new-environment"}
-                   title))))
 
 (defn handle-change [e data edit-key]
   (om/transact! data edit-key (fn [_] (.. e -target -value))))

@@ -1,6 +1,8 @@
 (ns retroboard.user
   (:require [retroboard.xhr :as xhr]
             [retroboard.util :refer [display]]
+            [retroboard.actions :as actions]
+            [retroboard.templates :as templates]
             [cljs.core.async :refer [<! chan]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
@@ -35,6 +37,16 @@
               :password password}
        :chan ch})))
 
+(defn validate-input [email password owner]
+  (let [email-validation (and (re-find #"\." email)
+                              (re-find #"@" email))
+        password-validation (> (count password) 7)]
+    (if email-validation
+      (if password-validation
+        true
+        (om/set-state! owner :validation (assoc validation :password "Your password is too short.")))
+      (om/set-state! owner :validation (assoc validation :email "Please enter a valid email.")))))
+
 (defn add-board
   ([eid]
      (let [ch (chan)]
@@ -58,18 +70,29 @@
        :url "/user/boards"
        :chan ch})))
 
-(defn input [id type on-change]
-  (dom/div #js {:className "form-group"}
-           (dom/label #js {:htmlFor id
-                           :className "col-sm-3 col-xs-12 control-label"}
-                      type)
-           (dom/div #js {:className "col-sm-9 col-xs-12"}
-                    (dom/input #js {:className "form-control required"
-                                    :type type
-                                    :name id
-                                    :id id
-                                    :placeholder ""
-                                    :onChange on-change}))))
+(defn input [id type on-change validation]
+  (let [email-error (:email validation)
+        passw-error (:password validation)]
+    (dom/div #js {:className "form-group"}
+             (dom/label #js {:htmlFor id
+                             :className "col-sm-3 col-xs-12 control-label"}
+                        type)
+             (dom/div #js {:className "col-sm-9 col-xs-12"}
+                      (dom/input #js {:className "form-control required"
+                                      :type type
+                                      :name id
+                                      :id id
+                                      :placeholder ""
+                                      :onChange on-change})
+                      (if (= "email" type)
+                        (dom/label #js {:htmlFor id
+                                        :className "error"
+                                        :style (display (if email-error true))}
+                                   email-error)
+                        (dom/label #js {:htmlFor id
+                                        :className "error"
+                                        :style (display (if passw-error true))}
+                                   passw-error))))))
 
 (defn handle-change [owner id]
   (fn [e]
@@ -78,34 +101,31 @@
 
 (defn board-link [board-id]
   (dom/a #js {:href (str "/e/" board-id)}
-         board-id))
+         (str "http://remboard.com/e/" board-id)))
 
-(defn header-nav [& [logo]]
+(defn header-nav [& [options]]
   (dom/nav #js {:className "navigation navigation-header"}
            (dom/div #js {:className "container"}
                     (dom/div #js {:className "navigation-brand"}
-                             (when logo
+                             (when (:logo options)
                                (dom/div #js {:className "brand-logo"}
                                         (dom/a #js {:href "#" :className "logo"})
-                                        (dom/span #js {:className "sr-only"} "remboard")))
-                             (dom/button #js {:className "navigation-toggle visible-xs"
-                                              :type "button"
-                                              :data-toggle "dropdown"
-                                              :data-target "navigation-navbar"}
-                                         (dom/span {:className "icon-bar"})
-                                         (dom/span {:className "icon-bar"})
-                                         (dom/span {:className "icon-bar"})))
+                                        (dom/span #js {:className "sr-only"} "remboard"))))
                     (dom/div #js {:className "navigation-navbar"}
-                             (dom/ul #js {:className "navigation-bar navigation-bar-right"}
-                                     (dom/li nil
-                                             (dom/a #js {:href "#"} "Login"))
-                                     (dom/li #js {:className "featured"}
-                                             (dom/a #js {:href "#"} "Sign Up")))))))
+                             (if (:logged-in options)
+                               (dom/ul #js {:className "navigation-bar navigation-bar-right"}
+                                       (dom/li nil
+                                               (dom/a #js {:href "/user/logout"} "Logout")))
+                               (dom/ul #js {:className "navigation-bar navigation-bar-right"}
+                                       (dom/li nil
+                                               (dom/a #js {:href "#"} "Login"))
+                                       (dom/li #js {:className "featured"}
+                                               (dom/a #js {:href "#"} "Sign Up"))))))))
 
-(defn header [& [logo]]
+(defn header [& [options]]
   (dom/header nil
               (dom/div #js {:className "header-holder"}
-                       (header-nav logo))))
+                       (header-nav options))))
 
 (defn login-view [app owner {:keys [on-login]}]
   (reify
@@ -121,14 +141,14 @@
                 (if (<= 200 status 300)
                   (on-login)))))))
     om/IRenderState
-    (render-state [_ {:keys [ch screen username email password] :as state}]
+    (render-state [_ {:keys [ch screen username email password validation] :as state}]
       (dom/div #js {:id "login-signup"}
                (dom/form #js {:className "form form-register dark"
                               :style (display (= screen :login))}
                          (input "your_email" "email"
-                                (handle-change owner :email))
+                                (handle-change owner :email) validation)
                          (input "your_password" "password"
-                                (handle-change owner :password))
+                                (handle-change owner :password) validation)
                          (dom/button
                           #js {:className "btn btn-primary btn-lg btn-block"
                                :onClick (fn [e]
@@ -140,21 +160,25 @@
                          (dom/a #js {:href "#"
                                      :id "switch-login-register"
                                      :onClick (fn [_] (om/set-state! owner :screen :signup))}
-                                "or sign up"))
+                                "or register"))
                (dom/form #js {:className "form form-register dark"
                               :style (display (= screen :signup))}
                          (input "email" "email"
-                                (handle-change owner :email))
+                                (handle-change owner :email) validation)
                          (input "password" "password"
-                                (handle-change owner :password))
+                                (handle-change owner :password) validation)
                          (dom/button
                           #js {:className "btn btn-primary btn-lg btn-block"
                                :onClick (fn [e]
                                           (.preventDefault e)
-                                          (signup email
-                                                  password
-                                                  ch))}
-                          "Get Started")
+                                          (when (validate-input email password owner)
+                                            (do (signup email
+                                                        password
+                                                        ch)
+                                                (do-login email
+                                                          password
+                                                          ch))))}
+                          "Register")
                          (dom/a #js {:href "#"
                                      :id "switch-login-register"
                                      :onClick (fn [_] (om/set-state! owner :screen :login))}
@@ -180,6 +204,45 @@
   (dom/div #js {:className "back-to-top"}
            (dom/i #js {:className "fa fa-angle-up fa-3x"})))
 
+(defn create-environment
+  ([& [initial-actions]]
+     (let [create-ch (chan)]
+       (xhr/edn-xhr
+        {:method :post
+         :url "/env"
+         :data {:initial-actions initial-actions
+                :on-join (actions/user-join)
+                :on-leave (actions/user-leave)}
+         :chan create-ch})
+       (go (:body (<! create-ch))))))
+
+(defn change-env [env-id]
+  (set! (.-pathname js/location) (str "e/" env-id)))
+
+(defn create-board-button
+  ([title]
+     (create-board-button title nil))
+  ([title template]
+     (let [create-env (fn []
+                        (go
+                         (let [env-id (<! (create-environment template))]
+                           (change-env env-id))))]
+       (dom/li nil
+               (dom/a #js {:onClick create-env
+                           :className "new-environment btn btn-secondary"}
+                      title)))))
+
+(def dashboard-button-section
+  (dom/section #js {:id "sc-button"
+                    :className "section dark text-center"}
+               (dom/div #js {:className "container"}
+                        (dom/h3 nil "Create a New Board")
+                        (dom/ul #js {:className "list-inline"}
+                                (create-board-button "Pro / Con" templates/pros-and-cons)
+                                (create-board-button "Card Wall" templates/card-wall)
+                                (create-board-button "Retro" templates/retro)
+                                (create-board-button "Empty Board")))))
+
 (def dashboard-content
   (dom/div #js {:id "body"}
            (dom/section #js {:id "sc-heading"
@@ -189,29 +252,30 @@
                                 (dom/span #js {:className "highlight"}
                                           "Rem")
                                 "boards"))
-           (dom/section #js {:id "sc-button"
-                             :className "section dark text-center"}
-                        (dom/div #js {:className "container"}
-                                 (dom/h3 nil "Create a New Board")
-                                 (dom/ul #js {:className "list-inline"}
-                                         (dom/li nil
-                                                 (dom/a #js {:className "btn btn-secondary"}
-                                                        "Pro / Con"))
-                                         (dom/li nil
-                                                 (dom/a #js {:className "btn btn-primary"}
-                                                        "Empty Board"))
-                                         (dom/li nil
-                                                 (dom/a #js {:className "btn btn-secondary"}
-                                                        "Retro")))))))
+           dashboard-button-section))
 
-(defn dashboard-view [app ch]
+(defn display-boards [boards]
+  (dom/section #js {:id "sc-table"
+                    :className "section dark"}
+               (dom/div #js {:className "container"}
+                        (dom/table #js {:className "table table-striped table-bordered"}
+                                   (dom/thead nil
+                                              (dom/tr nil
+                                                      (dom/th nil "Remboard Link")))
+                                   (apply dom/tbody nil
+                                          (map #(dom/tr nil
+                                                        (dom/td nil
+                                                                (board-link %))) boards))))))
+
+(defn dashboard-view [app ch boards]
   (dom/div #js {:id "dashboard"}
-           (header)
-           dashboard-content))
+           (header {:logged-in true})
+           dashboard-content
+           (display-boards boards)))
 
 (defn register-view [app ch]
   (dom/div #js {:id "register-page"}
-           (header)
+           (header {:logo true})
            (register-content app ch)
            back-to-top))
 
@@ -232,10 +296,9 @@
                 (om/set-state! owner :boards body))))))
     om/IRenderState
     (render-state [_ {:keys [logged-in? boards ch]}]
-      (.log js/console logged-in?)
       (if logged-in?
         (dom/div #js {:id "shortcodes-page"}
-                 (dashboard-view app ch)
+                 (dashboard-view app ch boards)
                  #_(dom/div nil
                           (dom/h1 nil "Your Boards")
                           (apply dom/ul nil

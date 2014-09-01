@@ -238,7 +238,7 @@ blockquote:after { font-family: "line-icons";  position: absolute; color: #6E99F
 #shortcodes-page .container { width:960px; }
 #shortcodes-page .section { padding-bottom: 30px; padding-top: 30px; }
 #shortcodes-page .header-holder { background: #2d2d2d; -webkit-background-size: cover;-moz-background-size: cover;-o-background-size: cover;background-size: cover; background-attachment: fixed; height: 85px; width: 100%; }
-#sc-heading { margin-top: 50px; }
+#sc-heading { margin-top: 25px; }
 #sc-heading h1, #sc-heading h2, #sc-heading h3, #sc-heading h5, #sc-heading h6 { margin-bottom: 15px; }
 
 #sc-button ul.list-inline { margin-bottom: 30px; }
@@ -586,7 +586,7 @@ input[type=file]:focus, input[type=radio]:focus, input[type=checkbox]:focus { ou
 	
     .navigation .container { padding:0; }
     .navigation-brand { float: none; margin-right: 0 !important; }
-    .navigation-brand .brand-logo { padding: 15px 0px 0px 0px; margin-left:15px; float: left; }
+    .navigation-brand .brand-logo { display: none; }
 	.navigation-header .navigation-brand { margin:0px 0px 0px 0px; }
 		
     .navigation-bar > li,
