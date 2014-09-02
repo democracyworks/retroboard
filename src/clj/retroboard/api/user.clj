@@ -23,7 +23,7 @@
     (if user
       (friend/merge-authentication (edn-resp "Created!" 201)
                                    (assoc user :identity email))
-      (edn-resp "Problem" 500))))
+      (edn-resp {:errors {:email "That email didn't work."}} 402))))
 
 (def api-routes
   (->

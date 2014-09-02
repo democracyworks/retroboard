@@ -37,10 +37,11 @@
               :password password}
        :chan ch})))
 
-(defn validate-input [email password owner]
+(defn validate-input [validation email password owner]
   (let [email-validation (and (re-find #"\." email)
                               (re-find #"@" email))
-        password-validation (> (count password) 7)]
+        password-validation (> (count password) 7)
+        validation {}]
     (if email-validation
       (if password-validation
         true
@@ -112,15 +113,11 @@
                                         (dom/a #js {:href "#" :className "logo"})
                                         (dom/span #js {:className "sr-only"} "remboard"))))
                     (dom/div #js {:className "navigation-navbar"}
-                             (if (:logged-in options)
-                               (dom/ul #js {:className "navigation-bar navigation-bar-right"}
-                                       (dom/li nil
-                                               (dom/a #js {:href "/user/logout"} "Logout")))
-                               (dom/ul #js {:className "navigation-bar navigation-bar-right"}
-                                       (dom/li nil
-                                               (dom/a #js {:href "#"} "Login"))
-                                       (dom/li #js {:className "featured"}
-                                               (dom/a #js {:href "#"} "Sign Up"))))))))
+                             (dom/ul #js {:className "navigation-bar navigation-bar-right"}
+                                     (dom/li nil
+                                             (dom/a #js {:href "#"} "Login"))
+                                     (dom/li #js {:className "featured"}
+                                             (dom/a #js {:href "#"} "Sign Up")))))))
 
 (defn header [& [options]]
   (dom/header nil
@@ -131,7 +128,7 @@
   (reify
     om/IInitState
     (init-state [_]
-      {:screen :login
+      {:screen :signup
        :ch (chan)})
     om/IWillMount
     (will-mount [_]
@@ -139,11 +136,12 @@
         (go (while true
               (let [{:keys [status body]} (<! ch)]
                 (if (<= 200 status 300)
-                  (on-login)))))))
+                  (on-login)
+                  ))))))
     om/IRenderState
-    (render-state [_ {:keys [ch screen username email password validation] :as state}]
+    (render-state [_ {:keys [ch screen username email password validation boards status] :as state}]
       (dom/div #js {:id "login-signup"}
-               (dom/form #js {:className "form form-register dark"
+               (dom/form #js {:className "form form-register dark animated fadeIn"
                               :style (display (= screen :login))}
                          (input "your_email" "email"
                                 (handle-change owner :email) validation)
@@ -161,7 +159,7 @@
                                      :id "switch-login-register"
                                      :onClick (fn [_] (om/set-state! owner :screen :signup))}
                                 "or register"))
-               (dom/form #js {:className "form form-register dark"
+               (dom/form #js {:className "form form-register dark animated fadeIn"
                               :style (display (= screen :signup))}
                          (input "email" "email"
                                 (handle-change owner :email) validation)
@@ -171,7 +169,7 @@
                           #js {:className "btn btn-primary btn-lg btn-block"
                                :onClick (fn [e]
                                           (.preventDefault e)
-                                          (when (validate-input email password owner)
+                                          (when (validate-input validation email password owner)
                                             (do (signup email
                                                         password
                                                         ch)
@@ -182,27 +180,12 @@
                          (dom/a #js {:href "#"
                                      :id "switch-login-register"
                                      :onClick (fn [_] (om/set-state! owner :screen :login))}
-                                  "or login"))))))
+                                "or login"))))))
 
-(defn register-content [app ch]
-  (dom/div #js {:id "hero"
-                :className "static-header light"}
-           (dom/div #js {:className "text-heading"}
-                    (dom/h1 nil
-                            "Collaborate "
-                            (dom/span #js {:className "highlight"} "remotely")
-                            ", Create Together")
-                    (dom/p nil "remboard is your online collaboration spot for reviewing, brainstorming and more"))
-           (dom/div #js {:className "container"}
-                    (dom/div #js {:className "row"}
-                             (dom/div #js {:className "col-lg-6 col-lg-offset-3 col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12"}
-                                      (om/build login-view app {:opts {:on-login #(fetch-boards ch)}})
-                                      (dom/p #js {:className "agree-text"}
-                                             "By clicking you agree to our Terms of Service, Privacy Policy & Refund Policy."))))))
-
-(def back-to-top
-  (dom/div #js {:className "back-to-top"}
-           (dom/i #js {:className "fa fa-angle-up fa-3x"})))
+(defn display-boards [boards]
+  (apply dom/div nil
+         (map #(dom/p #js {:className "text-center"}
+                      (board-link %)) (reverse (take 3 boards)))))
 
 (defn create-environment
   ([& [initial-actions]]
@@ -227,56 +210,81 @@
                         (go
                          (let [env-id (<! (create-environment template))]
                            (change-env env-id))))]
-       (dom/li nil
-               (dom/a #js {:onClick create-env
-                           :className "new-environment btn btn-secondary"}
-                      title)))))
+       (dom/button
+        #js {:className "new-environment btn btn-secondary btn-block"
+             :onClick create-env}
+        title))))
 
-(def dashboard-button-section
-  (dom/section #js {:id "sc-button"
-                    :className "section dark text-center"}
-               (dom/div #js {:className "container"}
-                        (dom/h3 nil "Create a New Board")
-                        (dom/ul #js {:className "list-inline"}
-                                (create-board-button "Pro / Con" templates/pros-and-cons)
-                                (create-board-button "Card Wall" templates/card-wall)
-                                (create-board-button "Retro" templates/retro)
-                                (create-board-button "Empty Board")))))
+(defn dashboard-view [app owner {:keys [on-login]}]
+  (reify
+    om/IInitState
+    (init-state [_]
+      {:ch (chan)})
+    om/IWillMount
+    (will-mount [_]
+      (let [ch (om/get-state owner :ch)]
+        (fetch-boards ch)
+        (go (while true
+              (let [{:keys [status body]} (<! ch)]
+                (om/set-state! owner :boards body)
+                (if (<= 200 status 300)
+                  (on-login)))))))
+    om/IRenderState
+    (render-state [_ {:keys [ch boards status] :as state}]
+      (dom/div #js {:id "login-signup"}
+               (dom/form #js {:className "form form-register dark animated fadeIn"
+                              }
+                         (dom/section #js {:id "sc-boxalert"}
+                                      (dom/div #js {:className "text-left"}
+                                               (dom/div #js {:className "alert alert-info"}
+                                                        (dom/strong nil "Congrats! ")
+                                                        "Your login was successful."
+                                                        (dom/i #js {:className "icon icon-badges-votes-10"})))
+                                      (dom/div nil
+                                               (dom/h3 #js {:className "text-center"}
+                                                       "Your Latest Remboards")
+                                               (.log js/console boards)
+                                               (display-boards boards)))
+                         (dom/h3 #js {:className "text-center"}
+                                 "Create a New Board")
+                         (create-board-button "Pro / Con" templates/pros-and-cons)
+                         (create-board-button "Card Wall" templates/card-wall)
+                         (create-board-button "Retro" templates/retro)
+                         (create-board-button "Empty Board")
+                         (dom/a #js {:id "switch-login-register"
+                                     :href "/user/logout"} "or logout"))))))
 
-(def dashboard-content
-  (dom/div #js {:id "body"}
-           (dom/section #js {:id "sc-heading"
-                             :className "section text-center"}
-                        (dom/h1 nil
-                                "Your "
-                                (dom/span #js {:className "highlight"}
-                                          "Rem")
-                                "boards"))
-           dashboard-button-section))
+(defn register-content [app ch logged-in?]
+  (dom/div #js {:id "hero"
+                :className "static-header light"}
+           (dom/div #js {:className "text-heading animated fadeIn"}
+                    (dom/h1 nil
+                            "Collaborate "
+                            (dom/span #js {:className "highlight"} "remotely")
+                            ", Create Together")
+                    (dom/p nil "remboard is your online collaboration spot for reviewing, brainstorming and more"))
+           (dom/div #js {:className "container"}
+                    (dom/div #js {:className "row"}
+                             (dom/div #js {:className "col-lg-6 col-lg-offset-3 col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12"}
+                                      (if logged-in?
+                                        (om/build dashboard-view app)
+                                        (om/build login-view app {:opts {:on-login #(fetch-boards ch)}}))
+                                      (dom/p #js {:className "agree-text animated fadeIn"}
+                                             (dom/a #js {:href "#"
+                                                         :onClick (fn []
+                                                                    (go
+                                                                     (let [env-id (<! (create-environment))]
+                                                                       (change-env env-id))))}
+                                                    "Or, just go straight to an empty board!")))))))
 
-(defn display-boards [boards]
-  (dom/section #js {:id "sc-table"
-                    :className "section dark"}
-               (dom/div #js {:className "container"}
-                        (dom/table #js {:className "table table-striped table-bordered"}
-                                   (dom/thead nil
-                                              (dom/tr nil
-                                                      (dom/th nil "Remboard Link")))
-                                   (apply dom/tbody nil
-                                          (map #(dom/tr nil
-                                                        (dom/td nil
-                                                                (board-link %))) boards))))))
+(def back-to-top
+  (dom/div #js {:className "back-to-top"}
+           (dom/i #js {:className "fa fa-angle-up fa-3x"})))
 
-(defn dashboard-view [app ch boards]
-  (dom/div #js {:id "dashboard"}
-           (header {:logged-in true})
-           dashboard-content
-           (display-boards boards)))
-
-(defn register-view [app ch]
+(defn register-view [app ch logged-in?]
   (dom/div #js {:id "register-page"}
            (header {:logo true})
-           (register-content app ch)
+           (register-content app ch logged-in?)
            back-to-top))
 
 (defn profile-view [app owner]
@@ -292,16 +300,7 @@
         (fetch-boards ch)
         (go (while true
               (let [{:keys [status body]} (<! ch)]
-                (om/set-state! owner :logged-in? (= 200 status))
-                (om/set-state! owner :boards body))))))
+                (om/set-state! owner :logged-in? (= 200 status)))))))
     om/IRenderState
-    (render-state [_ {:keys [logged-in? boards ch]}]
-      (if logged-in?
-        (dom/div #js {:id "shortcodes-page"}
-                 (dashboard-view app ch boards)
-                 #_(dom/div nil
-                          (dom/h1 nil "Your Boards")
-                          (apply dom/ul nil
-                                 (map #(dom/li nil (board-link %)) boards)))
-                 #_(dom/a #js {:href "/user/logout"} "Logout"))
-        (register-view app ch)))))
+    (render-state [_ {:keys [logged-in? ch]}]
+      (register-view app ch logged-in?))))
