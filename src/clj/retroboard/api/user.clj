@@ -23,7 +23,7 @@
     (if user
       (friend/merge-authentication (edn-resp "Created!" 201)
                                    (assoc user :identity email))
-      (edn-resp {:errors {:email "That email didn't work."}} 402))))
+      (edn-resp {:errors {:email "That email address is already in use."}} 401))))
 
 (def api-routes
   (->
@@ -38,5 +38,5 @@
      :unauthenticated-handler (fn [_] (edn-resp "You need to login to see that." 401))
      :credential-fn user/cred-fn
      :workflows [(workflows/interactive-form
-                  :login-failure-handler (fn [_] (edn-resp "Invalid email or password" 401))
+                  :login-failure-handler (fn [_] (edn-resp {:errors {:email "Invalid email or password"}} 401))
                   :redirect-on-auth? false)]})))

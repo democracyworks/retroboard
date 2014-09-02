@@ -38,15 +38,15 @@
        :chan ch})))
 
 (defn validate-input [validation email password owner]
-  (let [email-validation (and (re-find #"\." email)
+  (let [valid-email? (and (re-find #"\." email)
                               (re-find #"@" email))
-        password-validation (> (count password) 7)
-        validation {}]
-    (if email-validation
-      (if password-validation
-        true
-        (om/set-state! owner :validation (assoc validation :password "Your password is too short.")))
-      (om/set-state! owner :validation (assoc validation :email "Please enter a valid email.")))))
+        valid-password? (> (count password) 7)]
+    (om/set-state! owner :validation {})
+    (if-not valid-email?
+      (om/update-state! owner :validation #(assoc % :email "Please enter a valid email.")))
+    (if-not valid-password?
+      (om/update-state! owner :validation #(assoc % :password "Your password is too short.")))
+    (and valid-email? valid-password?)))
 
 (defn add-board
   ([eid]
@@ -137,7 +137,7 @@
               (let [{:keys [status body]} (<! ch)]
                 (if (<= 200 status 300)
                   (on-login)
-                  ))))))
+                  (om/update-state! owner :validation #(assoc % :email (get-in body [:errors :email])))))))))
     om/IRenderState
     (render-state [_ {:keys [ch screen username email password validation boards status] :as state}]
       (dom/div #js {:id "login-signup"}
@@ -157,7 +157,9 @@
                           "Login")
                          (dom/a #js {:href "#"
                                      :id "switch-login-register"
-                                     :onClick (fn [_] (om/set-state! owner :screen :signup))}
+                                     :onClick (fn [_]
+                                                (om/set-state! owner :validation {})
+                                                (om/set-state! owner :screen :signup))}
                                 "or register"))
                (dom/form #js {:className "form form-register dark animated fadeIn"
                               :style (display (= screen :signup))}
@@ -170,16 +172,15 @@
                                :onClick (fn [e]
                                           (.preventDefault e)
                                           (when (validate-input validation email password owner)
-                                            (do (signup email
-                                                        password
-                                                        ch)
-                                                (do-login email
-                                                          password
-                                                          ch))))}
+                                            (signup email
+                                                    password
+                                                    ch)))}
                           "Register")
                          (dom/a #js {:href "#"
                                      :id "switch-login-register"
-                                     :onClick (fn [_] (om/set-state! owner :screen :login))}
+                                     :onClick (fn [_]
+                                                (om/set-state! owner :validation {})
+                                                (om/set-state! owner :screen :login))}
                                 "or login"))))))
 
 (defn display-boards [boards]
