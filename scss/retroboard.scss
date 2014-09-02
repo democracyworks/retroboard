@@ -260,6 +260,14 @@ body { margin: 0; }
 
   }
 
+  #boards {
+    text-align: center;
+    span {
+      font-size: 12px;
+      font-style: italic;
+    }
+  }
+
   #columns {
     @include flex-box-row;
     -webkit-justify-content: flex-start;

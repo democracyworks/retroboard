@@ -184,9 +184,13 @@
                                 "or login"))))))
 
 (defn display-boards [boards]
-  (apply dom/div nil
-         (map #(dom/p #js {:className "text-center"}
-                      (board-link %)) (reverse (take 3 boards)))))
+  (dom/div #js {:id "boards"}
+           (if (empty? boards)
+             (dom/span #js {:className "no-boards"}
+                       "Your most recently viewed boards will show up here.")
+             (apply dom/div nil
+                    (map #(dom/p #js {:className "text-center"}
+                                 (board-link %)) (reverse (take 3 boards)))))))
 
 (defn create-environment
   ([& [initial-actions]]
@@ -244,7 +248,6 @@
                                       (dom/div nil
                                                (dom/h3 #js {:className "text-center"}
                                                        "Your Latest Remboards")
-                                               (.log js/console boards)
                                                (display-boards boards)))
                          (dom/h3 #js {:className "text-center"}
                                  "Create a New Board")
