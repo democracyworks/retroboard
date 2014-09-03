@@ -262,14 +262,15 @@
            (dom/div #js {:className "container"}
                     (dom/div #js {:className "row"}
                              (dom/div #js {:className "col-lg-6 col-lg-offset-3 col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12"}
-                                      (dom/button
-                                       #js {:id "get-started-no-login"
-                                            :className "animdated fadeIn btn btn-secondary btn-block"
-                                            :onClick (fn []
-                                                       (go
-                                                        (let [env-id (<! (create-environment))]
-                                                          (change-env env-id))))}
-                                       "Start Collaborating")
+                                      (when-not logged-in?
+                                        (dom/button
+                                         #js {:id "get-started-no-login"
+                                              :className "animdated fadeIn btn btn-secondary btn-block"
+                                              :onClick (fn []
+                                                         (go
+                                                          (let [env-id (<! (create-environment))]
+                                                            (change-env env-id))))}
+                                         "Start Collaborating"))
                                       (if logged-in?
                                         (om/build dashboard-view app)
                                         (om/build login-view app {:opts {:on-login #(fetch-boards ch)}}))))
