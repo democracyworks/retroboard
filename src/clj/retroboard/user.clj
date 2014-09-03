@@ -1,16 +1,9 @@
 (ns retroboard.user
-  (:require [cemerick.friend.credentials :as creds]
+  (:require [retroboard.util :refer [mongo-uri]]
+            [cemerick.friend.credentials :as creds]
             [monger.core :as mg]
             [monger.collection :as mc])
   (:import [org.bson.types ObjectId]))
-
-(defn mongo-uri [] (if (System/getenv "MONGO_PORT_27017_TCP_ADDR")
-                     (str "mongodb://"
-                          (System/getenv "MONGO_PORT_27017_TCP_ADDR")
-                          ":"
-                          (System/getenv "MONGO_PORT_27017_TCP_PORT")
-                          "/remboard")
-                     "mongodb://127.0.0.1/retroboard"))
 
 (defn db [] (:db (mg/connect-via-uri (mongo-uri))))
 (def users "users")
@@ -53,11 +46,11 @@
 (defn cred-fn [creds]
   (creds/bcrypt-credential-fn lookup creds))
 
-(defn add-board [email eid]
+(defn add-board [email board]
   (let [user (lookup email)]
     (mc/update-by-id (db) users
                      (:_id user)
-                     (update-in user [:boards] (comp set #(conj % eid))))))
+                     (update-in user [:boards] (comp set #(conj % board))))))
 
 (defn boards [email]
   (:boards (lookup email)))

@@ -1,16 +1,14 @@
 (ns retroboard.environment
   (:require [taoensso.carmine :as car :refer [wcar]]
-            [retroboard.util :refer [rand-str]]
+            [retroboard.util :refer [rand-str mongo-uri redis-uri]]
             [clojure.core.async :refer [chan put! mult tap untap]]
             [retroboard.resource :as resource]
+            [monger.core :as mg]
+            [monger.collection :as mc]
             [clojure.edn :as edn]))
 
-(defn redis-uri [] (if (System/getenv "REDIS_PORT_6379_TCP_ADDR")
-                     (str "redis://"
-                          (System/getenv "REDIS_PORT_6379_TCP_ADDR")
-                          ":"
-                          (System/getenv "REDIS_PORT_6379_TCP_PORT"))
-                     "redis://127.0.0.1:6379"))
+(defn db [] (:db (mg/connect-via-uri (mongo-uri))))
+(def environments "environments")
 
 (defn server1-conn [] {:pool {} :spec {:uri (redis-uri)}})
 (defmacro wcar* [& body] `(car/wcar (server1-conn) ~@body))
@@ -26,13 +24,18 @@
     (if (and on-join on-leave)
       (wcar* (car/set (str env-map "." eid ".on-join") on-join)
              (car/set (str env-map "." eid ".on-leave") on-leave)))
+    (mc/insert (db) environments {:name eid :created-at (java.util.Date.)})
     eid))
 
 (defn delete [eid]
-  (= (wcar* (car/hdel env-map eid)) 1))
+  (and (= (wcar* (car/hdel env-map eid)) 1)
+       (mc/remove (db) environments {:name eid})))
 
 (defn exists? [eid]
   (= (wcar* (car/hexists env-map eid)) 1))
+
+(defn lookup [eid]
+  (mc/find-one-as-map (db) environments {:name eid}))
 
 (def channel-id (partial str "env."))
 
