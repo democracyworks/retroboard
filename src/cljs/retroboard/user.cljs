@@ -207,7 +207,8 @@
   ([title]
      (create-board-button title nil))
   ([title template]
-     (let [create-env (fn []
+     (let [create-env (fn [evt]
+                        (.preventDefault evt)
                         (go
                          (let [env-id (<! (create-environment template))]
                            (change-env env-id))))]
@@ -268,7 +269,8 @@
                                         (dom/button
                                          #js {:id "get-started-no-login"
                                               :className "animdated fadeIn btn btn-secondary btn-block"
-                                              :onClick (fn []
+                                              :onClick (fn [evt]
+                                                         (.preventDefault evt)
                                                          (go
                                                           (let [env-id (<! (create-environment))]
                                                             (change-env env-id))))}
