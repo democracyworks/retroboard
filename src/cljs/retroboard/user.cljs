@@ -214,7 +214,7 @@
              :onClick create-env}
         title))))
 
-(defn dashboard-view [app owner {:keys [on-login]}]
+(defn dashboard-view [app owner]
   (reify
     om/IInitState
     (init-state [_]
@@ -225,9 +225,7 @@
         (fetch-boards ch)
         (go (while true
               (let [{:keys [status body]} (<! ch)]
-                (om/set-state! owner :boards body)
-                (if (<= 200 status 300)
-                  (on-login)))))))
+                (om/set-state! owner :boards body))))))
     om/IRenderState
     (render-state [_ {:keys [ch boards status] :as state}]
       (dom/div #js {:id "login-signup"}
