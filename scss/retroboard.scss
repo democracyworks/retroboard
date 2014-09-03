@@ -132,6 +132,7 @@ body { margin: 0; }
       margin-bottom: 20px;
 
       h1 {
+        font-size: 32px;
         min-height: 43px;
       }
 
@@ -185,6 +186,7 @@ body { margin: 0; }
     #back {
       float: left;
       font-size: 40px;
+      line-height: 1.1em;
       color: white;
       padding: 12px 0 0 10px;
       @include icon('\f053');
@@ -246,6 +248,7 @@ body { margin: 0; }
         padding: 15px 10px;
       } // Small Size Screens
       @include condensed-text;
+      line-height: 1.1em;
       margin: 5px;
       padding: 10px 15px;
       font-size: 24px;
@@ -345,6 +348,7 @@ body { margin: 0; }
           .note-content {
             p {
               font-size: $main-text-size;
+              line-height: 1.45em;
               margin: $main-text-size;
               min-height: 1em;
             }
@@ -469,6 +473,10 @@ body { margin: 0; }
   input {
     display: block;
   }
+}
+
+#get-started-no-login {
+  margin-top: 50px; 
 }
 
 //THIS IS GROSS

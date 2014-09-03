@@ -111,13 +111,7 @@
                              (when (:logo options)
                                (dom/div #js {:className "brand-logo"}
                                         (dom/a #js {:href "#" :className "logo"})
-                                        (dom/span #js {:className "sr-only"} "remboard"))))
-                    (dom/div #js {:className "navigation-navbar"}
-                             (dom/ul #js {:className "navigation-bar navigation-bar-right"}
-                                     (dom/li nil
-                                             (dom/a #js {:href "#"} "Login"))
-                                     (dom/li #js {:className "featured"}
-                                             (dom/a #js {:href "#"} "Sign Up")))))))
+                                        (dom/span #js {:className "sr-only"} "remboard")))))))
 
 (defn header [& [options]]
   (dom/header nil
@@ -270,16 +264,19 @@
            (dom/div #js {:className "container"}
                     (dom/div #js {:className "row"}
                              (dom/div #js {:className "col-lg-6 col-lg-offset-3 col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12"}
+                                      (dom/button
+                                       #js {:id "get-started-no-login"
+                                            :className "animdated fadeIn btn btn-secondary btn-block"
+                                            :onClick (fn []
+                                                       (go
+                                                        (let [env-id (<! (create-environment))]
+                                                          (change-env env-id))))}
+                                       "Start Collaborating")
                                       (if logged-in?
                                         (om/build dashboard-view app)
-                                        (om/build login-view app {:opts {:on-login #(fetch-boards ch)}}))
-                                      (dom/p #js {:className "agree-text animated fadeIn"}
-                                             (dom/a #js {:href "#"
-                                                         :onClick (fn []
-                                                                    (go
-                                                                     (let [env-id (<! (create-environment))]
-                                                                       (change-env env-id))))}
-                                                    "Or, just go straight to an empty board!")))))))
+                                        (om/build login-view app {:opts {:on-login #(fetch-boards ch)}}))))
+                    (dom/p #js {:className "agree-text animated fadeIn"}
+                           ""))))
 
 (def back-to-top
   (dom/div #js {:className "back-to-top"}
