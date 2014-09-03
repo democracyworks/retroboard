@@ -100,9 +100,10 @@
     (let [new-value (.. e -target -value)]
       (om/set-state! owner id new-value))))
 
-(defn board-link [board-id]
-  (dom/a #js {:href (str "/e/" board-id)}
-         (str "http://remboard.com/e/" board-id)))
+(defn board-link [board]
+  (let [board-name (:name board)]
+    (dom/a #js {:href (str "/e/" board-name)}
+           (str "http://remboard.com/e/" board-name))))
 
 (defn header-nav [& [options]]
   (dom/nav #js {:className "navigation navigation-header"}
