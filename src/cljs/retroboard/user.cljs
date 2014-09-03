@@ -184,7 +184,8 @@
                        "Your most recently viewed boards will show up here.")
              (apply dom/div nil
                     (map #(dom/p #js {:className "text-center"}
-                                 (board-link %)) (reverse (take 3 boards)))))))
+                                 (board-link %)) (take 3 (reverse
+                                                          (sort-by :created-at boards))))))))
 
 (defn create-environment
   ([& [initial-actions]]
