@@ -77,7 +77,7 @@
     (dom/div #js {:className "form-group"}
              (dom/label #js {:htmlFor id
                              :className "col-sm-3 col-xs-12 control-label"}
-                        type)
+                        id)
              (dom/div #js {:className "col-sm-9 col-xs-12"}
                       (dom/input #js {:className "form-control required"
                                       :type type
@@ -85,15 +85,18 @@
                                       :id id
                                       :placeholder ""
                                       :onChange on-change})
-                      (if (= "email" type)
+                      (case type
+                        "email"
                         (dom/label #js {:htmlFor id
                                         :className "error"
                                         :style (display (if email-error true))}
                                    email-error)
+                        "password"
                         (dom/label #js {:htmlFor id
                                         :className "error"
                                         :style (display (if passw-error true))}
-                                   passw-error))))))
+                                   passw-error)
+                        nil)))))
 
 (defn handle-change [owner id]
   (fn [e]
@@ -112,35 +115,54 @@
                              (when (:logo options)
                                (dom/div #js {:className "brand-logo"}
                                         (dom/a #js {:href "#" :className "logo"})
-                                        (dom/span #js {:className "sr-only"} "remboard")))))))
+                                        (dom/span #js {:className "sr-only"} "remboard"))))
+                    (dom/ul #js {:className "navigation-bar navigation-bar-right"}
+                            (dom/li nil
+                                    (dom/a #js {:href "#login"} "Login"))
+                            (dom/li #js {:className "featured"}
+                                    (dom/a #js {:href "#signup"} "Sign up"))))))
 
 (defn header [& [options]]
   (dom/header nil
               (dom/div #js {:className "header-holder"}
                        (header-nav options))))
 
+(defn signup-or-login []
+  (case (.-hash js/location)
+    "#login" :login
+    "#signup" :signup
+    :signup))
+
 (defn login-view [app owner {:keys [on-login]}]
   (reify
     om/IInitState
     (init-state [_]
-      {:screen :signup
+      {:screen (signup-or-login)
        :ch (chan)})
     om/IWillMount
     (will-mount [_]
+      (set! (.-onhashchange js/window)
+            (fn []
+              (om/set-state! owner :validation {})
+              (om/set-state! owner :screen
+                             (signup-or-login))))
       (let [ch (om/get-state owner :ch)]
         (go (while true
               (let [{:keys [status body]} (<! ch)]
                 (if (<= 200 status 300)
                   (on-login)
                   (om/update-state! owner :validation #(assoc % :email (get-in body [:errors :email])))))))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (set! (.-onhashchange js/window) nil))
     om/IRenderState
     (render-state [_ {:keys [ch screen username email password validation boards status] :as state}]
       (dom/div #js {:id "login-signup"}
                (dom/form #js {:className "form form-register dark animated fadeIn"
                               :style (display (= screen :login))}
-                         (input "your_email" "email"
+                         (input "email" "email"
                                 (handle-change owner :email) validation)
-                         (input "your_password" "password"
+                         (input "password" "password"
                                 (handle-change owner :password) validation)
                          (dom/button
                           #js {:className "btn btn-primary btn-lg btn-block"
@@ -150,11 +172,8 @@
                                                     password
                                                     ch))}
                           "Login")
-                         (dom/a #js {:href "#"
-                                     :id "switch-login-register"
-                                     :onClick (fn [_]
-                                                (om/set-state! owner :validation {})
-                                                (om/set-state! owner :screen :signup))}
+                         (dom/a #js {:id "switch-login-register"
+                                     :href "#signup"}
                                 "or register"))
                (dom/form #js {:className "form form-register dark animated fadeIn"
                               :style (display (= screen :signup))}
@@ -171,11 +190,8 @@
                                                     password
                                                     ch)))}
                           "Register")
-                         (dom/a #js {:href "#"
-                                     :id "switch-login-register"
-                                     :onClick (fn [_]
-                                                (om/set-state! owner :validation {})
-                                                (om/set-state! owner :screen :login))}
+                         (dom/a #js {:id "switch-login-register"
+                                     :href "#login"}
                                 "or login"))))))
 
 (defn display-boards [boards]
@@ -201,7 +217,7 @@
        (go (:body (<! create-ch))))))
 
 (defn change-env [env-id]
-  (set! (.-pathname js/location) (str "e/" env-id)))
+  (set! (.-href js/location) (str "e/" env-id)))
 
 (defn create-board-button
   ([title]
