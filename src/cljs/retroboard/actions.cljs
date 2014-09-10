@@ -43,4 +43,5 @@
    (if-let [note (get-in state [:columns column-id :notes id])]
      (-> state
          (update-in [:columns column-id :notes] dissoc id)
-         (assoc-in [:columns new-column-id :notes id] note)))))
+         (assoc-in [:columns new-column-id :notes id] note))
+     state)))
