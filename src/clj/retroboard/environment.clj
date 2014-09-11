@@ -5,6 +5,7 @@
             [retroboard.resource :as resource]
             [monger.core :as mg]
             [monger.collection :as mc]
+            [monger.operators :refer :all]
             [clojure.edn :as edn]))
 
 (defn db [] (:db (mg/connect-via-uri (mongo-uri))))
@@ -55,9 +56,17 @@
            {:map env-map :key key}
            {:vec (-> coll vec pr-str)}))
 
+(defmulti handle-action (fn [eid [action data]] action))
+
+(defmethod handle-action :default [_ _] nil)
+
+(defmethod handle-action :edit-name [eid [_ {:keys [new-name]}]]
+  (mc/update (db) environments {:name eid} {$set {:display-name new-name}}))
+
 (defn append-actions [eid actions]
   (let [actions-with-ids (resource/replace-ids (resource-generator eid)
                                                actions)]
+    (doall (map (partial handle-action eid) actions-with-ids))
     (wcar* (clj-append eid actions-with-ids))
     (publish-actions eid actions-with-ids)
     actions-with-ids))

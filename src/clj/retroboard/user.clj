@@ -1,5 +1,6 @@
 (ns retroboard.user
   (:require [retroboard.util :refer [mongo-uri]]
+            [retroboard.environment :as env]
             [cemerick.friend.credentials :as creds]
             [monger.core :as mg]
             [monger.collection :as mc])
@@ -46,11 +47,16 @@
 (defn cred-fn [creds]
   (creds/bcrypt-credential-fn lookup creds))
 
-(defn add-board [email board]
+(defn add-board [email board-name]
   (let [user (lookup email)]
-    (mc/update-by-id (db) users
-                     (:_id user)
-                     (update-in user [:boards] (comp set #(conj % board))))))
+    (if (env/lookup board-name)
+      (mc/update-by-id (db) users
+                       (:_id user)
+                       (update-in user [:boards] (comp set #(conj % board-name)))))))
 
 (defn boards [email]
-  (:boards (lookup email)))
+  (->> email
+      lookup
+      :boards
+      (map env/lookup)
+      (map #(dissoc % :_id))))

@@ -2,6 +2,10 @@
   (:require-macros [retroboard.macros :refer [defactions]]))
 
 (defactions apply-action
+  (edit-name
+   [new-name state]
+   (assoc state :name new-name))
+
   (user-join
    [state]
    (update-in state [:user-count] inc))

@@ -1,6 +1,5 @@
 (ns retroboard.api.user
   (:require [retroboard.user :as user]
-            [retroboard.environment :as env]
             [retroboard.util :refer [edn-resp]]
             [compojure.core :refer [routes GET POST ANY]]
             [ring.util.response :as resp]
@@ -13,12 +12,10 @@
                     (edn-resp (user/boards (:current (friend/identity req))))))
 
 (defn add-board [req]
-  (let [{:keys [eid]} (:params req)
-        board (dissoc (env/lookup eid) :_id)]
-    (if board
-      (friend/authorize #{::user/user}
-                        (user/add-board (:current (friend/identity req)) board)
-                        (edn-resp "OK")))))
+  (let [{:keys [eid]} (:params req)]
+    (friend/authorize #{::user/user}
+                      (user/add-board (:current (friend/identity req)) eid)
+                      (edn-resp "OK"))))
 
 (defn signup [req]
   (let [{:keys [email password]} (:params req)

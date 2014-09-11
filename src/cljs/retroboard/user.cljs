@@ -100,10 +100,9 @@
     (let [new-value (.. e -target -value)]
       (om/set-state! owner id new-value))))
 
-(defn board-link [board]
-  (let [board-name (:name board)]
-    (dom/a #js {:href (str "/e/" board-name)}
-           (str "http://remboard.com/e/" board-name))))
+(defn board-link [{:keys [name display-name]}]
+  (dom/a #js {:href (str "/e/" name)}
+         (or display-name (str "http://remboard.com/e/" name))))
 
 (defn header-nav [& [options]]
   (dom/nav #js {:className "navigation navigation-header"}
@@ -249,7 +248,7 @@
                          (create-board-button "Pro / Con" templates/pros-and-cons)
                          (create-board-button "Card Wall" templates/card-wall)
                          (create-board-button "Retro" templates/retro)
-                         (create-board-button "Empty Board")
+                         (create-board-button "Empty Board" templates/empty)
                          (dom/a #js {:id "switch-login-register"
                                      :href "/user/logout"} "or logout"))))))
 
