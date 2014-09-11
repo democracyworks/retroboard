@@ -16,7 +16,7 @@
 
 (defmulti cmd-handler (fn [data _ _] (:cmd data)))
 (defmethod cmd-handler :register [data eid-atom out-ch]
-  (println "Registering to env " (:action data))
+  (println "Registering to env" (:action data))
   (let [eid (:action data)]
     (if (env/exists? eid)
       (do
@@ -27,14 +27,14 @@
       (put! out-ch {:cmd :error :error :no-such-environment}))))
 
 (defmethod cmd-handler :unregister [data eid-atom out-ch]
-  (println "Unregistering")
+  (println "Unregistering from env" @eid-atom)
   (when (and @eid-atom (env/exists? @eid-atom))
     (env/unsubscribe @eid-atom out-ch)
     (env/on-leave @eid-atom)
     (reset! eid-atom nil)))
 
 (defmethod cmd-handler :actions [data eid-atom out-ch]
-  (println "Received " data " for " @eid-atom)
+  (println "Received" data "for" @eid-atom)
   (when (and @eid-atom (env/exists? @eid-atom))
     (env/append-actions @eid-atom (:actions data))))
 
