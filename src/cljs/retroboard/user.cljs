@@ -287,7 +287,7 @@
                                               :onClick (fn [evt]
                                                          (.preventDefault evt)
                                                          (go
-                                                          (let [env-id (<! (create-environment))]
+                                                          (let [env-id (<! (create-environment templates/empty))]
                                                             (change-env env-id))))}
                                          "Start Collaborating"))
                                       (if logged-in?
