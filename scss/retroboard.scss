@@ -475,8 +475,12 @@ body { margin: 0; }
   }
 }
 
+#switch-login-register:hover {
+  cursor: pointer;
+}
+
 #get-started-no-login {
-  margin-top: 50px; 
+  margin-top: 50px;
 }
 
 //THIS IS GROSS
