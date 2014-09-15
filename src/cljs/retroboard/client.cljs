@@ -473,14 +473,14 @@
                                        (dom/span #js {:id "back"
                                                       :onClick back-or-home})
                                        (om/build create-column-button (:connection app))
+                                       (om/build editable (:state app)
+                                                 {:opts {:edit-key :name
+                                                         :input-type dom/input
+                                                         :wrap-class "display-name"
+                                                         :on-edit (partial a/edit-name connection)
+                                                         :element dom/h1}})
                                        (om/build user-count-view (:state app))
                                        (om/build copy-url-view nil))
-                              (om/build editable (:state app)
-                                        {:opts {:edit-key :name
-                                                :input-type dom/input
-                                                :wrap-class "display-name"
-                                                :on-edit (partial a/edit-name connection)
-                                                :element dom/h1}})
                               (apply dom/div #js {:id "columns"}
                                      (map (fn [col]
                                             (om/build droppable
