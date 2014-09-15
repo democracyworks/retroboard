@@ -129,6 +129,11 @@ body { margin: 0; }
   .display-name {
     float: left;
     margin-left: 30px;
+    @media all and (max-width: 800px) {
+      float: none;
+      margin: 0 0 15px;
+      text-align: center;
+    } // Small Size Screens
     h1 {
       color: white;
       font-family: Lato, sans-serif;
@@ -136,6 +141,7 @@ body { margin: 0; }
       font-weight: 300;
       padding: 0;
       margin: 0;
+      @media all and (max-width: 500px) { font-size: 2em; } // Mobile
     }
     input {
       background: none;
@@ -145,6 +151,12 @@ body { margin: 0; }
       font-weight: 300;
       margin-top: -8px;
       margin-left: -1px;
+      @media all and (max-width: 800px) {
+        float: none;
+        margin-bottom: -7px;
+        text-align: center;
+      } // Small Size Screens
+      @media all and (max-width: 500px) { font-size: 2em; } // Mobile
     }
   }
 
@@ -213,6 +225,7 @@ body { margin: 0; }
       color: white;
       padding: 12px 0 0 10px;
       @include icon('\f053');
+      @media all and (max-width: 800px) { display: none; }
 
       &:hover {
         cursor: pointer;
@@ -220,10 +233,10 @@ body { margin: 0; }
     }
 
     #create-column {
-      @media all and (max-width: 800px) { width: 70%; } // Small Size Screens
       float: left;
       width: 46%;
       margin-left: 3%;
+      @media all and (max-width: 800px) { float: none; margin: 0 auto; width: 90%; } // Small Size Screens
       input {
         width: 100%;
         border: 1px solid $grey;
@@ -267,8 +280,7 @@ body { margin: 0; }
         @include animation(0, 0.5s, redFlash);
       }
       @media all and (max-width: 800px) {
-        font-size: 20px;
-        padding: 15px 10px;
+        display: none;
       } // Small Size Screens
       @include condensed-text;
       line-height: 1.1em;
