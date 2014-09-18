@@ -494,7 +494,7 @@
                                           (sort-by first columns)))))
                    (om/build user/profile-view app)))))))
 
-(def app-state (atom {:state {} :connection (web-socket)
+(def app-state (atom {:state a/new-board :connection (web-socket)
                       :droppable-nodes {}}))
 
 (defn get-env-id []

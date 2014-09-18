@@ -135,6 +135,8 @@ body { margin: 0; }
       text-align: center;
     } // Small Size Screens
     h1 {
+      min-height: 52px;
+      min-width: 100px;
       color: white;
       font-family: Lato, sans-serif;
       font-size: 3em;

@@ -49,3 +49,5 @@
          (update-in [:columns column-id :notes] dissoc id)
          (assoc-in [:columns new-column-id :notes id] note))
      state)))
+
+(def new-board {:name "[Title]"})
