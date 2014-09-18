@@ -130,8 +130,6 @@ body { margin: 0; }
     float: left;
     margin-left: 30px;
     @media all and (max-width: 800px) {
-      float: none;
-      margin: 0 0 15px;
       text-align: center;
     } // Small Size Screens
     h1 {
@@ -154,9 +152,7 @@ body { margin: 0; }
       margin-top: -8px;
       margin-left: -1px;
       @media all and (max-width: 800px) {
-        float: none;
         margin-bottom: -7px;
-        text-align: center;
       } // Small Size Screens
       @media all and (max-width: 500px) { font-size: 2em; } // Mobile
     }
@@ -282,8 +278,9 @@ body { margin: 0; }
         @include animation(0, 0.5s, redFlash);
       }
       @media all and (max-width: 800px) {
-        display: none;
+        margin-right: 30px;
       } // Small Size Screens
+
       @include condensed-text;
       line-height: 1.1em;
       margin: 5px;
