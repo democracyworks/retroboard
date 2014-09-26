@@ -140,11 +140,13 @@
        :ch (chan)})
     om/IWillMount
     (will-mount [_]
-      (set! (.-onhashchange js/window)
-            (fn []
-              (om/set-state! owner :validation {})
-              (om/set-state! owner :screen
-                             (signup-or-login))))
+      (let [change (.-onhashchange js/window)]
+        (set! (.-onhashchange js/window)
+              (fn []
+                (when change (change))
+                (om/set-state! owner :validation {})
+                (om/set-state! owner :screen
+                               (signup-or-login)))))
       (let [ch (om/get-state owner :ch)]
         (go (while true
               (let [{:keys [status body]} (<! ch)]
@@ -268,15 +270,15 @@
                          (dom/a #js {:id "switch-login-register"
                                      :href "/user/logout"} "or logout"))))))
 
-(defn register-content [app ch logged-in?]
+(defn register-content [app ch logged-in? show-video?]
   (dom/div #js {:id "hero"
                 :className "static-header light"}
            (dom/div #js {:className "text-heading animated fadeIn"}
-                    (dom/h1 nil
-                            "Collaborate "
-                            (dom/span #js {:className "highlight"} "remotely")
-                            ", Create Together")
-                    (dom/p nil "remboard is your online collaboration spot for reviewing, brainstorming and more"))
+                    (when (and show-video? (not logged-in?))
+                      (dom/video #js {:src "/assets/vid/demo.mp4"
+                                      :autoPlay true
+                                      :loop true
+                                      :width "68%"})))
            (dom/div #js {:className "container"}
                     (dom/div #js {:className "row"}
                              (dom/div #js {:className "col-lg-6 col-lg-offset-3 col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12"}
@@ -300,10 +302,10 @@
   (dom/div #js {:className "back-to-top"}
            (dom/i #js {:className "fa fa-angle-up fa-3x"})))
 
-(defn register-view [app ch logged-in?]
+(defn register-view [app ch logged-in? show-video?]
   (dom/div #js {:id "register-page"}
            (header {:logo true})
-           (register-content app ch logged-in?)
+           (register-content app ch logged-in? show-video?)
            back-to-top))
 
 (defn profile-view [app owner]
@@ -311,15 +313,22 @@
     om/IInitState
     (init-state [_]
       {:boards nil
+       :show-video? (empty? (.-hash js/location))
        :logged-in? false
        :ch (chan)})
     om/IWillMount
     (will-mount [_]
+      (set! (.-onhashchange js/window)
+            (fn []
+              (om/set-state! owner :show-video? (empty? (.-hash js/location)))))
       (let [ch (om/get-state owner :ch)]
         (fetch-boards ch)
         (go (while true
               (let [{:keys [status body]} (<! ch)]
                 (om/set-state! owner :logged-in? (= 200 status)))))))
     om/IRenderState
-    (render-state [_ {:keys [logged-in? ch]}]
-      (register-view app ch logged-in?))))
+    (render-state [_ {:keys [logged-in? show-video? ch]}]
+      (register-view app ch logged-in? show-video?))
+    om/IWillUnmount
+    (will-unmount [_]
+      (set! (.-onhashchange js/window) nil))))
