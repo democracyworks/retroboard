@@ -275,10 +275,14 @@
                 :className "static-header light"}
            (dom/div #js {:className "text-heading animated fadeIn"}
                     (when (and show-video? (not logged-in?))
-                      (dom/video #js {:src "/assets/vid/demo.mp4"
-                                      :autoPlay true
+                      (dom/video #js {:autoPlay true
                                       :loop true
-                                      :width "68%"})))
+                                      :width "68%"
+                                      :preload "auto"}
+                                 (dom/source #js {:src "/assets/vid/demo.webm"
+                                                  :type "video/webm"})
+                                 (dom/source #js {:src "/assets/vid/demo.mp4"
+                                                  :type "video/mp4"}))))
            (dom/div #js {:className "container"}
                     (dom/div #js {:className "row"}
                              (dom/div #js {:className "col-lg-6 col-lg-offset-3 col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12"}
