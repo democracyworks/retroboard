@@ -278,7 +278,8 @@
                       (dom/video #js {:autoPlay true
                                       :loop true
                                       :width "68%"
-                                      :preload "auto"}
+                                      :preload "auto"
+                                      :poster "/assets/img/demo-poster.png"}
                                  (dom/source #js {:src "/assets/vid/demo.webm"
                                                   :type "video/webm"})
                                  (dom/source #js {:src "/assets/vid/demo.mp4"
