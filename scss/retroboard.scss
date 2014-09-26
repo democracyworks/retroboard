@@ -514,7 +514,15 @@ body { margin: 0; }
 }
 
 #get-started-no-login {
+  border-color: #6E99FF;
+  background: #6E99FF;
+  color: white;
   margin-top: 50px;
+
+  &:hover {
+    border-color: #6EAFFF;
+    background: #6EAFFF;
+  }
 }
 
 //THIS IS GROSS

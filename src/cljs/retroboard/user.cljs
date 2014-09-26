@@ -290,7 +290,7 @@
                                       (when-not logged-in?
                                         (dom/button
                                          #js {:id "get-started-no-login"
-                                              :className "animdated fadeIn btn btn-secondary btn-block"
+                                              :className "animated fadeIn btn btn-secondary btn-block"
                                               :onClick (fn [evt]
                                                          (.preventDefault evt)
                                                          (go
