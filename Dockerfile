@@ -1,13 +1,12 @@
-FROM java
+FROM clojure:lein-2.5.0
 
-RUN wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
-RUN mv lein /bin/lein
-RUN chmod a+x /bin/lein
-ENV LEIN_ROOT 1
-RUN lein version
+RUN mkdir -p /usr/src/retroboard
+WORKDIR /usr/src/retroboard
 
-ADD ./ /remboard/
-WORKDIR /remboard
+COPY project.clj /usr/src/retroboard/
+RUN lein deps
+
+COPY . /usr/src/retroboard
 
 RUN lein uberjar
 
