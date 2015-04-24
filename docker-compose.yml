@@ -1,0 +1,11 @@
+retroboard:
+  build: .
+  links:
+    - redis
+    - mongo
+  ports:
+    - 80
+redis:
+  image: redis:3.0.0
+mongo:
+  image: mongo:3.0.2

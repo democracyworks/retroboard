@@ -21,6 +21,7 @@
                  [com.cemerick/friend "0.2.1" :exclusions [org.clojure/core.cache]]
                  [com.novemberain/monger "2.0.0"]]
   :source-paths ["src/clj" "src/cljx"]
+  :auto-clean false
   :cljx {:builds [{:source-paths ["src/cljx"]
                    :output-path "target/classes"
                    :rules :clj}
