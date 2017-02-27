@@ -4,7 +4,7 @@ retroboard:
     - redis
     - mongo
   ports:
-    - 80
+    - 32323:80
 redis:
   image: redis:3.0.0
 mongo:
