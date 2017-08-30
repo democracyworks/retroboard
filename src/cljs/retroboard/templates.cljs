@@ -9,9 +9,9 @@
 
 (def retro
   [(a/edit-name "[Retrospective]")
-   (a/new-column (rid 0) "The Good")
-   (a/new-column (rid 1) "The Bad")
-   (a/new-column (rid 2) "The Unknown")
+   (a/new-column (rid 0) "Went Well")
+   (a/new-column (rid 1) "Improvable")
+   (a/new-column (rid 2) "(Qu|Sugg)estions")
    (a/new-column (rid 3) "Action Items")])
 
 (def pros-and-cons
