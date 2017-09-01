@@ -6,7 +6,7 @@
   :plugins [[lein-cljsbuild "1.0.3"]
             [com.cemerick/clojurescript.test "0.3.0"]
             [com.keminglabs/cljx "0.4.0"]
-            [lein-haml-sass "0.2.7-SNAPSHOT"]]
+            [deraen/lein-sass4clj "0.3.1"]]
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2234"]
                  [org.clojure/core.async "0.1.319.0-6b1aca-alpha"]
@@ -38,12 +38,11 @@
   :min-lein-version "2.0.0"
   :main retroboard.server
   :aliases {"uberjar" ["do" "cljx" "once,"
-                       "scss" "once,"
+                       "sass4clj" "once,"
                        "cljsbuild" "once" "production,"
                        "uberjar"]}
-  :scss {:src "scss"
-         :output-directory "resources/public/stylesheets"
-         :output-extension "css"}
+  :sass {:source-paths ["scss"]
+         :target-path "resources/public/stylesheets"}
   :cljsbuild {
               :builds {:dev
                        {:source-paths ["src/cljs" "target/classes"]
