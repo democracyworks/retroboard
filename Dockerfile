@@ -1,4 +1,4 @@
-FROM clojure:lein-2.5.0
+FROM clojure:lein-2.7.1
 
 RUN mkdir -p /usr/src/retroboard
 WORKDIR /usr/src/retroboard
