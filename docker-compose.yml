@@ -1,11 +1,17 @@
-retroboard:
-  build: .
-  links:
-    - redis
-    - mongo
-  ports:
-    - 32323:80
-redis:
-  image: redis:3.0.0
-mongo:
-  image: mongo:3.0.2
+---
+version: "2"
+services:
+  retroboard:
+    build: .
+    depends_on:
+      - redis
+      - mongo
+    ports:
+      - 32323:80
+    environment:
+      REDIS_URI: redis://redis:6379
+      MONGO_URI: mongodb://mongo/retroboard
+  redis:
+    image: redis:3.2
+  mongo:
+    image: mongo:3.2

@@ -51,17 +51,10 @@
         (handler req*))
       (handler req))))
 
-(defn mongo-uri [] (if (System/getenv "MONGO_PORT_27017_TCP_ADDR")
-                     (str "mongodb://"
-                          (System/getenv "MONGO_PORT_27017_TCP_ADDR")
-                          ":"
-                          (System/getenv "MONGO_PORT_27017_TCP_PORT")
-                          "/remboard")
-                     "mongodb://127.0.0.1/retroboard"))
+(defn mongo-uri []
+  (or (System/getenv "MONGO_URI")
+      "mongodb://localhost/retroboard"))
 
-(defn redis-uri [] (if (System/getenv "REDIS_PORT_6379_TCP_ADDR")
-                     (str "redis://"
-                          (System/getenv "REDIS_PORT_6379_TCP_ADDR")
-                          ":"
-                          (System/getenv "REDIS_PORT_6379_TCP_PORT"))
-                     "redis://127.0.0.1:6379"))
+(defn redis-uri []
+  (or (System/getenv "REDIS_URI")
+      "redis://localhost:6379"))
